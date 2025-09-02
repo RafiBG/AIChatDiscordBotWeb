@@ -19,7 +19,6 @@ namespace AIChatDiscordBotWeb.Services
             _serviceProvider = serviceProvider;
         }
 
-        //private string Token = "
 
         public async Task StartAsync()
         {
@@ -46,10 +45,9 @@ namespace AIChatDiscordBotWeb.Services
 
             var slash = _client.UseSlashCommands(new SlashCommandsConfiguration
             {
-                Services = _serviceProvider // this connects ASP.NET DI to DSharpPlus
+                Services = _serviceProvider
             });
-            //slash.RegisterCommands<AIChat>();
-            slash.RegisterCommands<AIChat>(1317235767319199845);
+            slash.RegisterCommands<AIChat>();
 
             await _client.ConnectAsync();
             _isRunning = true;
