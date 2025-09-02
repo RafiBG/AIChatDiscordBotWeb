@@ -1,0 +1,40 @@
+﻿@model AIChatDiscordBotWeb.Models.EnvConfig
+
+@{
+    ViewBag.Title = "Configuration";
+    // Convert list of ulong IDs into a comma-separated string for editing
+    string allowedChannels = string.Join(",", Model.ALLOWED_CHANNEL_IDS ?? new List<ulong>());
+}
+
+<h2>Bot Configuration</h2>
+
+<form asp-action="Save" method="post">
+    <div class="mb-3">
+        <label>Bot Token</label>
+        <input asp-for="BOT_TOKEN" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Local Host</label>
+        <input asp-for="LOCAL_HOST" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Model</label>
+        <input asp-for="MODEL" class="form-control" />
+        <p>Write the whole name as shown in ollama</p>
+    </div>
+
+    <div class="mb-3">
+        <label>Allowed Channel IDs</label>
+        <input name="AllowedChannelIdsInput" value="@allowedChannels" class="form-control" />
+        <p>Comma separated for more than one  Example: 12456, 2345</p>
+    </div>
+
+    <div class="mb-3">
+        <label>System Message</label>
+        <textarea asp-for="SYSTEM_MESSAGE" class="form-control" style="height:100px;"></textarea>
+    </div>
+    <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>

@@ -1,0 +1,25 @@
+﻿@{
+    ViewBag.Title = "Discord Bot Control";
+    bool isRunning = ViewBag.IsRunning ?? false;
+}
+
+<div class="d-flex flex-column justify-content-center align-items-center text-center" style="min-height: 40vh;">
+    <h2>Discord Bot Control</h2>
+
+    @if (isRunning)
+    {
+        <h5 class="text-success fw-bold">Bot is online</h5>
+
+        <form asp-action="Stop" method="post" class="mt-3">
+            <button type="submit" class="btn btn-danger">Stop Bot</button>
+        </form>
+    }
+    else
+    {
+        <h5 class="text-danger fw-bold">Bot is offline</h5>
+
+        <form asp-action="Start" method="post" class="mt-3">
+            <button type="submit" class="btn btn-success">Start Bot</button>
+        </form>
+    }
+</div>
