@@ -16,6 +16,8 @@ builder.Services.AddSingleton<EnvConfig>(sp =>
 // Register OllamaService (depends on EnvConfig)
 builder.Services.AddSingleton<OllamaService>();
 
+builder.Services.AddSingleton<ChatMemoryService>();
+
 // Register BotService (needs EnvService + IServiceProvider)
 builder.Services.AddSingleton<BotService>(sp =>
 {

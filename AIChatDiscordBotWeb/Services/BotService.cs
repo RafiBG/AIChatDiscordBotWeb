@@ -47,7 +47,7 @@ namespace AIChatDiscordBotWeb.Services
             {
                 Services = _serviceProvider
             });
-            slash.RegisterCommands<AIChat>();
+            slash.RegisterCommands<AIChat>(1317235767319199845);
 
             await _client.ConnectAsync();
             _isRunning = true;
