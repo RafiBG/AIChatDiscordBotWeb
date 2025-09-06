@@ -1,5 +1,7 @@
 ﻿using AIChatDiscordBotWeb.Models;
 using OllamaSharp;
+using OllamaSharp.Models.Chat;
+using System.Collections.Concurrent;
 
 namespace AIChatDiscordBotWeb.Services
 {
@@ -7,6 +9,8 @@ namespace AIChatDiscordBotWeb.Services
     {
         private readonly OllamaApiClient _ollamaClient;
         private readonly string _model;
+        private readonly ConcurrentDictionary<ulong, List<dynamic>> _memory = new();
+
 
         public OllamaService(EnvConfig config)
         {

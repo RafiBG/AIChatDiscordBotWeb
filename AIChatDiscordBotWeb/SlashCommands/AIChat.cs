@@ -14,16 +14,18 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private readonly OllamaService _ollama;
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels = new();
+        private readonly ChatMemoryService _chatMemory;
 
         // Per-user locks to avoid same user sending multiple concurrent requests
         private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _userLocks = new();
         private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
-        public AIChat(OllamaService ollama ,EnvConfig config)
+        public AIChat(OllamaService ollama ,EnvConfig config, ChatMemoryService chatMemory)
         {
             _ollama = ollama;
             _systemMessage = config.SYSTEM_MESSAGE;
             _allowedChannels = config.ALLOWED_CHANNEL_IDS;
+            _chatMemory = chatMemory;
         }
 
         [SlashCommand("ask" , "Ask something to the AI")]
@@ -57,15 +59,14 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             {
                 await ctx.DeferAsync();
 
-                string Username = ctx.User.Username;
+                string username = ctx.User.Username;
+
+                _chatMemory.AddUserMessage(userId, username, message, _systemMessage);
+
                 var chatRequest = new ChatRequest
                 {
                     Model = _ollama.Model,
-                    Messages = new List<Message>
-                    {
-                        new Message {Role = "system", Content = _systemMessage},
-                        new Message {Role = "user", Content = $"{Username}: {message}"}
-                    }
+                    Messages = _chatMemory.GetUserMessages(userId, _systemMessage)
                 };
 
             string aifullRespone = "";
@@ -85,14 +86,16 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     Console.WriteLine("Error: No respone from Ollama");
                 }
 
-                Console.WriteLine($"Raw response \n\n {aifullRespone}");
+                Console.WriteLine($"Raw response (check thinking models) \n\n {aifullRespone}");
 
                 // Remove <think>...</think> from thinking models response
                 string aiCleanedResponse = Regex.Replace(aifullRespone, @"<think>.*?</think>", "", RegexOptions.Singleline);
 
+                _chatMemory.AddAssistantMessage(userId, aiCleanedResponse);
+
                 Console.WriteLine($"\n{DateTime.Now}");
-                Console.WriteLine($"=============\n {Username} asked:\n{message}\n=============\n");
-                Console.WriteLine($"-----------------\n AI {_ollama.Model} responded: {aiCleanedResponse}\n-----------------\n");
+                Console.WriteLine($"=============\n {username} asked:\n{message}\n=============\n");
+                Console.WriteLine($"-----------------\n AI {_ollama.Model} responded: \n{aiCleanedResponse}\n-----------------\n");
 
                 var embed = new DiscordEmbedBuilder
                 {
@@ -112,6 +115,26 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             finally { userLock.Release(); }
         }
 
+        [SlashCommand("forgetme", "Forget my chat history")]
+        public async Task ForgetMeAsync(InteractionContext ctx)
+        {
+            _chatMemory.ClearUserHistory(ctx.User.Id);
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder()
+                .WithContent("Your chat history has been cleared.")
+                .AsEphemeral());
+        }
+
+        [SlashCommand("reset", "Reset all chats histories")]
+        public async Task ResetAsync(InteractionContext ctx)
+        {
+            _chatMemory.ResetAll();
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder()
+                .WithContent("All chat histories have been reset.")
+                .AsEphemeral());
+        }
+
         [SlashCommand("help", "Show all commands")]
         public async Task HelpAsync(InteractionContext ctx)
         {
@@ -121,11 +144,9 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             {
                 Title = "AI Bot Commands",
                 Description = "**/ask** - Talk to the AI\n" +
+                              "**/forgetme** - Forget your chat only\n" +
+                              "**/reset** - Reset all chats\n" +
                               "**/help** - Show this help",
-                //Description = "**/ask** - Talk to the AI\n" +
-                //              "**/forgetme** - Forget your chat only\n" +
-                //              "**/reset** - Reset all chats\n" +
-                //              "**/help** - Show this help",
                 Color = DiscordColor.White,
             };
 
