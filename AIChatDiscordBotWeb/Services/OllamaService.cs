@@ -1,6 +1,5 @@
 ﻿using AIChatDiscordBotWeb.Models;
 using OllamaSharp;
-using OllamaSharp.Models.Chat;
 using System.Collections.Concurrent;
 
 namespace AIChatDiscordBotWeb.Services
@@ -14,7 +13,8 @@ namespace AIChatDiscordBotWeb.Services
 
         public OllamaService(EnvConfig config)
         {
-            _ollamaClient = new OllamaApiClient(new Uri(config.LOCAL_HOST));
+            //http://localhost:11434
+            _ollamaClient = new OllamaApiClient(new Uri($"http://localhost:{config.LOCAL_HOST}"));
             _model = config.MODEL;
         }
 

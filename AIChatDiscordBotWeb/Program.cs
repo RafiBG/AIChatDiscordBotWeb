@@ -1,5 +1,5 @@
-using AIChatDiscordBotWeb.Services;
 using AIChatDiscordBotWeb.Models;
+using AIChatDiscordBotWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +29,23 @@ builder.Services.AddSingleton<BotService>(sp =>
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+// Open the browser page
+//app.MapGet("/", () => "");
+
+// Start browser after server is ready
+//app.Lifetime.ApplicationStarted.Register(() =>
+//{
+//    try
+//    {
+//        Process.Start(new ProcessStartInfo
+//        {
+//            FileName = "http://localhost:5000",
+//            UseShellExecute = true, // Opens default browser
+//        });
+//    }
+//    catch { } // Ignore if browser fails
+//});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -35,7 +35,7 @@ namespace AIChatDiscordBotWeb.Services
                 switch (key)
                 {
                     case "BOT_TOKEN": config.BOT_TOKEN = value; break;
-                    case "LOCAL_HOST": config.LOCAL_HOST = value; break;
+                    case "LOCAL_HOST": config.LOCAL_HOST = Convert.ToInt32(value); break;
                     case "MODEL": config.MODEL = value; break;
                     case "ALLOWED_CHANNEL_IDS":
                         config.ALLOWED_CHANNEL_IDS = value
