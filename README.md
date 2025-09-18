@@ -25,8 +25,8 @@ Example of what you will be looking for the name of the model in the console.
 /help - Show all the commands for the AI chat bot.
 
 ## Images
-<img width="717" height="526" alt="image" src="https://github.com/user-attachments/assets/83ab0661-a1e3-4f0f-af1a-3b059acfb58b" /> <br>
+<img width="788" height="631" alt="image" src="https://github.com/user-attachments/assets/a485b027-522d-492f-b7d8-ee4596c5ba7f" /> <br>
 
-<img width="961" height="860" alt="image" src="https://github.com/user-attachments/assets/6fbb2b48-a458-4bd4-bde0-a7693dbdc32e" /> <br>
+<img width="733" height="817" alt="image" src="https://github.com/user-attachments/assets/6e1c9848-3055-4eaa-ab03-08aca79097ba" /> <br>
 
-<img width="470" height="260" alt="image" src="https://github.com/user-attachments/assets/fc989a12-db1d-49df-8adc-2aeee2221cdf" /> <br>
+<img width="574" height="330" alt="image" src="https://github.com/user-attachments/assets/4c763117-20cb-4547-9b53-0bc17443fec2" /> <br>
