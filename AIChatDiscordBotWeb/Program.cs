@@ -1,5 +1,7 @@
 using AIChatDiscordBotWeb.Models;
 using AIChatDiscordBotWeb.Services;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,29 +35,38 @@ var app = builder.Build();
 // Open the browser page
 //app.MapGet("/", () => "");
 
-// Start browser after server is ready
-//app.Lifetime.ApplicationStarted.Register(() =>
-//{
-//    try
-//    {
-//        Process.Start(new ProcessStartInfo
-//        {
-//            FileName = "http://localhost:5000",
-//            UseShellExecute = true, // Opens default browser
-//        });
-//    }
-//    catch { } // Ignore if browser fails
-//});
-
-// Configure the HTTP request pipeline.
+//// Start browser after server is ready
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        var server = app.Services.GetRequiredService<
+                         Microsoft.AspNetCore.Hosting.Server.IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
 
-app.UseHttpsRedirection();
+        if (addresses != null)
+        {
+            var url = addresses.Addresses.FirstOrDefault();
+            if (!string.IsNullOrEmpty(url))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
+                catch { } // Ignore if browser launch fails
+            }
+        }
+        app.UseExceptionHandler("/Home/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
+        // Only use HTTPS in dev mode
+        app.UseHttpsRedirection();
+    });
+}
 app.UseRouting();
 
 app.UseAuthorization();
