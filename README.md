@@ -21,7 +21,7 @@ Example of what you will be looking for the name of the model in the console.
 ![ModelName](https://github.com/user-attachments/assets/cb687521-ea53-44fe-8a0c-28db29f85d5e)
 
 # Slash commands
-/ask (your message) (optional file to read like pdf,txt,docx) <br/>
+/ask (your message) (optional file to read like pdf,txt,docx) (optional image to see) <br/>
 /forgetme - Start a fresh conversation with the AI only for you. <br/>
 /reset - Resets all the user's chats and starts a whole new conversation for everyone. <br/>
 /help - Show all the commands for the AI chat bot.
