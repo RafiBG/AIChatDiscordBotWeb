@@ -20,4 +20,8 @@
     <Content Include=".env" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="image\" />
+  </ItemGroup>
+
 </Project>

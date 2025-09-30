@@ -22,6 +22,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         // Per-user locks to avoid same user sending multiple concurrent requests
         private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _userLocks = new();
         private string givenFile;
+        private string givenImage;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
@@ -34,9 +35,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         }
 
         [SlashCommand("ask", "Ask something to the AI")]
-        public async Task AskAsync(InteractionContext ctx, 
+        public async Task AskAsync(InteractionContext ctx,
             [Option("message", "Your message")] string message,
-            [Option("attachment", "Optional file to read like pdf,txt,docx")] DiscordAttachment attachment = null)
+            [Option("file", "Optional file to read like pdf,txt,docx")] DiscordAttachment attachment = null,
+            [Option("image", "Optional image to see")] DiscordAttachment image = null)
         {   // Checks if user ask in allowed channel if there is one
             if (_allowedChannels.Count > 0 && !_allowedChannels.Contains(ctx.Channel.Id))
             {
@@ -68,6 +70,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 
                 string username = ctx.User.Username;
                 string fileContent = null;
+                byte[] imageBytes = null;
 
                 if (attachment != null)
                 {
@@ -102,13 +105,28 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     //// Can download the file in console manually (interesting)
                     //Console.WriteLine($"User file URL given to AI: {attachment.Url}");
                 }
-
                 _chatMemory.AddUserMessage(userId, username, finalMessage, _systemMessage);
+
+                var userMessages = _chatMemory.GetUserMessages(userId, _systemMessage);
+                if (image != null)
+                {
+                    using var httpImage = new HttpClient();
+                    imageBytes = await httpImage.GetByteArrayAsync(image.Url);
+                    givenImage = image.Url;
+                    //Console.WriteLine($"\nGiven image to see: {image.FileName}");
+                    string base64Image = Convert.ToBase64String(imageBytes);
+
+                    var lastMessage = userMessages.LastOrDefault();
+                    if (lastMessage != null)
+                    {
+                        lastMessage.Images = new[] { base64Image };
+                    }
+                }
 
                 var chatRequest = new ChatRequest
                 {
                     Model = _ollama.Model,
-                    Messages = _chatMemory.GetUserMessages(userId, _systemMessage)
+                    Messages = userMessages,
                 };
 
                 string aifullRespone = "";
@@ -184,7 +202,8 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     },
                     Title = $"Model:  {_ollama.Model} \n {givenFile} \n\nResponse",
                     Description = aiCleanedResponse,
-                    Color = DiscordColor.CornflowerBlue,
+                    ImageUrl = givenImage,
+                    Color = DiscordColor.CornflowerBlue
                 };
 
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
@@ -221,7 +240,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             var embed = new DiscordEmbedBuilder
             {
                 Title = "AI Bot Commands",
-                Description = "**/ask** - Talk to the AI\n" +
+                Description = "**/ask** - Ask the AI: Upload text (PDF, DOCX, TXT) or an image.\n" +
                               "**/forgetme** - Forget your chat only\n" +
                               "**/reset** - Reset all chats\n" +
                               "**/help** - Show this help",
