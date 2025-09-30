@@ -1,3 +1,5 @@
+# Latest version AIChatDiscordBotWeb v1.0.1
+The AI chat bot can now see images. The AI model must be multimodel with vision or images in him. From Ollama model, Gemma3 has vision and other models. Same way as you give him file there will be second optional named image.
 # Used libraries (Nugets)
 Made with C# on .NET 9.0 and libraries: DSharpPlus 4.5.1, DsharpPlus.Interactivity 4.5.1, DSharpPlus.SlashCommands 4.5.1, OllamaSharp 5.4.4, DocumentFormat.OpenXml 3.3.0, PdfPig 0.1.11
 # Steps to make it work
