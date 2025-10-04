@@ -32,3 +32,5 @@ Example of what you will be looking for the name of the model in the console.
 <img width="733" height="817" alt="image" src="https://github.com/user-attachments/assets/6e1c9848-3055-4eaa-ab03-08aca79097ba" /> <br>
 
 <img width="574" height="330" alt="image" src="https://github.com/user-attachments/assets/4c763117-20cb-4547-9b53-0bc17443fec2" /> <br>
+<img width="587" height="679" alt="image" src="https://github.com/user-attachments/assets/2d224286-15e1-4890-bfa6-6701405b654e" />
+
