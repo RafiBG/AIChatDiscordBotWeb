@@ -11,6 +11,8 @@
     <PackageReference Include="DSharpPlus" Version="4.5.1" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.5.1" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.5.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.66.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.66.0-alpha" />
     <PackageReference Include="OllamaSharp" Version="5.4.4" />
     <PackageReference Include="PdfPig" Version="0.1.11" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />

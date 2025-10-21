@@ -11,8 +11,9 @@
 <form asp-action="Save" method="post">
     <div class="mb-3">
         <label>Bot Token</label>
-        <input asp-for="BOT_TOKEN" class="form-control" />
-        <p>Get your custom bot token from https://discord.com/developers/applications</p>
+        <input asp-for="BOT_TOKEN" type="password" id="token" class="form-control" value="@Model.BOT_TOKEN" />
+        <input type="checkbox" onclick="tokenShow()">Show bot token
+        <p>Get your custom bot token from <a href="https://discord.com/developers/applications">here</a> </p>
     </div>
 
     <div class="mb-3">
@@ -37,6 +38,33 @@
         <label>System Message</label>
         <textarea asp-for="SYSTEM_MESSAGE" class="form-control" style="height:100px;"></textarea>
     </div>
+
+    <div class="mb-3">
+        <label>Serper web api key</label>
+        <input asp-for="SERPER_API_KEY" type="password" id="serper" class="form-control" value="@Model.SERPER_API_KEY" />
+        <p>Get your custom api key for web search from <a href="https://serper.dev/api-keys">here</a> </p>
+        <input type="checkbox" onclick="serperShow()">Show Serper API
+    </div>
     <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>
     <button type="submit" class="btn btn-primary">Save</button>
+
+    <script>
+        function tokenShow() {
+          var x = document.getElementById("token");
+          if (x.type === "password") {
+            x.type = "text";
+          } else {
+            x.type = "password";
+          }
+        }
+
+        function serperShow() {
+          var x = document.getElementById("serper");
+          if (x.type === "password") {
+            x.type = "text";
+          } else {
+            x.type = "password";
+          }
+        }
+    </script>
 </form>

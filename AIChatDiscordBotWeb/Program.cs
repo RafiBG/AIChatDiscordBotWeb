@@ -16,7 +16,7 @@ builder.Services.AddSingleton<EnvConfig>(sp =>
 });
 
 // Register OllamaService (depends on EnvConfig)
-builder.Services.AddSingleton<OllamaService>();
+builder.Services.AddSingleton<SemanticKernelService>();
 
 builder.Services.AddSingleton<ChatMemoryService>();
 
