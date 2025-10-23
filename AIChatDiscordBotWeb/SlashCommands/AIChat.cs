@@ -1,10 +1,12 @@
 ﻿using AIChatDiscordBotWeb.Models;
 using AIChatDiscordBotWeb.Services;
+using AIChatDiscordBotWeb.Tools;
 using DocumentFormat.OpenXml.Packaging;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
-using OllamaSharp.Models.Chat;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.Ollama;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,7 +16,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 {
     public class AIChat : ApplicationCommandModule
     {
-        private readonly OllamaService _ollama;
+        private readonly SemanticKernelService _kernelService;
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels = new();
         private readonly ChatMemoryService _chatMemory;
@@ -23,12 +25,13 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _userLocks = new();
         private string givenFile;
         private string givenImage;
+        private string webLinks;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
-        public AIChat(OllamaService ollama, EnvConfig config, ChatMemoryService chatMemory)
+        public AIChat(SemanticKernelService kernelService, EnvConfig config, ChatMemoryService chatMemory)
         {
-            _ollama = ollama;
+            _kernelService = kernelService;
             _systemMessage = config.SYSTEM_MESSAGE;
             _allowedChannels = config.ALLOWED_CHANNEL_IDS;
             _chatMemory = chatMemory;
@@ -37,7 +40,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         [SlashCommand("ask", "Ask something to the AI")]
         public async Task AskAsync(InteractionContext ctx,
             [Option("message", "Your message")] string message,
-            [Option("file", "Optional file to read like pdf,txt,docx")] DiscordAttachment attachment = null,
+            [Option("file", "Optional file to read like pdf,txt,docx")] DiscordAttachment file = null,
             [Option("image", "Optional image to see")] DiscordAttachment image = null)
         {   // Checks if user ask in allowed channel if there is one
             if (_allowedChannels.Count > 0 && !_allowedChannels.Contains(ctx.Channel.Id))
@@ -72,27 +75,27 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 string fileContent = null;
                 byte[] imageBytes = null;
 
-                if (attachment != null)
+                if (file != null)
                 {
-                    givenFile = $"Given file to read: {attachment.FileName}";
+                    givenFile = $"Given file to read: {file.FileName}";
                     using var http = new HttpClient();
-                    var bytes = await http.GetByteArrayAsync(attachment.Url);
+                    var bytes = await http.GetByteArrayAsync(file.Url);
 
-                    if (attachment.FileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                    if (file.FileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
                     {
                         fileContent = Encoding.UTF8.GetString(bytes);
                     }
-                    else if (attachment.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    else if (file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                     {
                         fileContent = ExtractPdfText(bytes);
                     }
-                    else if (attachment.FileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+                    else if (file.FileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
                     {
                         fileContent = ExtractDocxText(bytes);
                     }
                     else
                     {
-                        fileContent = $"Unsopported file type: {attachment.FileName}";
+                        fileContent = $"Unsopported file type: {file.FileName}";
                     }
                 }
 
@@ -100,36 +103,42 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 
                 if (!string.IsNullOrWhiteSpace(fileContent))
                 {
-                    finalMessage += $"\n\n[Attached file content {attachment.FileName}]:\n {fileContent}";
-                    Console.WriteLine($"\nGiven file to read: {attachment.FileName}");
+                    finalMessage += $"\n\n[Attached file content {file.FileName}]:\n {fileContent}";
+                    Console.WriteLine($"\nGiven file to read: {file.FileName}");
                     //// Can download the file in console manually (interesting)
-                    //Console.WriteLine($"User file URL given to AI: {attachment.Url}");
+                    //Console.WriteLine($"User file URL given to AI: {file.Url}");
                 }
-                _chatMemory.AddUserMessage(userId, username, finalMessage, _systemMessage);
 
-                var userMessages = _chatMemory.GetUserMessages(userId, _systemMessage);
+                var userMessageContent = new ChatMessageContent();
+
+                userMessageContent.Items.Add(new TextContent(finalMessage));
+
+                // If there's an image, download bytes and add an ImageContent part
                 if (image != null)
                 {
                     using var httpImage = new HttpClient();
                     imageBytes = await httpImage.GetByteArrayAsync(image.Url);
                     givenImage = image.Url;
-                    //Console.WriteLine($"\nGiven image to see: {image.FileName}");
-                    string base64Image = Convert.ToBase64String(imageBytes);
 
-                    var lastMessage = userMessages.LastOrDefault();
-                    if (lastMessage != null)
-                    {
-                        lastMessage.Images = new[] { base64Image };
-                    }
+                    string contentType = image.MediaType ?? "image/jpeg";
+                    var imageContent = new ImageContent(new ReadOnlyMemory<byte>(imageBytes), contentType);
+
+                    userMessageContent.Items.Add(imageContent);
+
+                    Console.WriteLine($"\nGiven image to see: {image.FileName}");
                 }
 
-                var chatRequest = new ChatRequest
+                _chatMemory.AddMessage(userId, userMessageContent);
+                var history = _chatMemory.GetUserMessages(userId, _systemMessage);
+                var chatService = _kernelService.ChatService;
+
+                var ollamaSettings = new OllamaPromptExecutionSettings
                 {
-                    Model = _ollama.Model,
-                    Messages = userMessages,
+                    //  Tells the model it can use any registered function/tool/plugin
+                    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
                 };
 
-                string aifullRespone = "";
+                string aiFullResponse = "";
 
                 var embedEmpty = new DiscordEmbedBuilder
                 {
@@ -138,7 +147,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         Name = $"{message}",
                         IconUrl = ctx.User.AvatarUrl
                     },
-                    Title = $"Model:  {_ollama.Model} \n {givenFile} \n\nResponse",
+                    Title = $"Model:  {_kernelService.Model} \n {givenFile} \n\nResponse",
                     Description = "Thinking...",
                     Color = DiscordColor.CornflowerBlue,
                 };
@@ -147,14 +156,14 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 var lastEdit = DateTime.UtcNow;
 
 
-                await foreach (var resp in _ollama.Client.ChatAsync(chatRequest))
+                await foreach (var content in chatService.GetStreamingChatMessageContentsAsync(history, ollamaSettings,_kernelService.Kernel))
                 {
-                    if (resp.Message?.Content != null)
+                    if (content.Content != null)
                     {
-                        sb.Append(resp.Message.Content);
-                        aifullRespone = sb.ToString();
+                        sb.Append(content.Content);
+                        aiFullResponse = sb.ToString();
                         // Throttle edits
-                        if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 800)
+                        if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1100)
                         {
                             lastEdit = DateTime.UtcNow;
 
@@ -165,8 +174,8 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                                     Name = message,
                                     IconUrl = ctx.User.AvatarUrl
                                 },
-                                Title = $"Model: {_ollama.Model}\n {givenFile}\n\nResponse",
-                                Description = aifullRespone,
+                                Title = $"Model: {_kernelService.Model}\n {givenFile}\n\nResponse",
+                                Description = aiFullResponse,
                                 Color = DiscordColor.CornflowerBlue
                             };
 
@@ -174,24 +183,32 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         }
                     }
                 }
-                aifullRespone = sb.ToString();
+                aiFullResponse = sb.ToString();
                 // Fallback in case Ollama gave nothing
-                if (string.IsNullOrEmpty(aifullRespone))
+                if (string.IsNullOrEmpty(aiFullResponse))
                 {
-                    aifullRespone = "Error: No respone from AI";
+                    aiFullResponse = "Error: No respone from AI";
                     Console.WriteLine("Error: No respone from Ollama");
                 }
 
-                Console.WriteLine($"Raw response (check thinking models) \n\n {aifullRespone}");
+                Console.WriteLine($"Raw response (check thinking models) \n\n {aiFullResponse}");
 
-                // Remove <think>...</think> from thinking models response
-                string aiCleanedResponse = Regex.Replace(aifullRespone, @"<think>.*?</think>", "", RegexOptions.Singleline);
+                var serperLinks = SerperSearchTool.LatestLinks;
 
-                _chatMemory.AddAssistantMessage(userId, aiCleanedResponse);
+                if (serperLinks != null && serperLinks.Count > 0)
+                {
+                    var linksText = string.Join("\n", serperLinks.Select(link => $"{link}"));
+                    webLinks = $"\n**Sources**\n {linksText}";
+                }
+
+                // Removes <think>...</think> from thinking models response
+                string aiCleanedResponse = Regex.Replace(aiFullResponse, @"<think>.*?</think>", "", RegexOptions.Singleline);
+
+                _chatMemory.AddAssistantMessage(userId, aiFullResponse);
 
                 Console.WriteLine($"\n{DateTime.Now}");
                 Console.WriteLine($"=============\n {username} asked:\n{message}\n=============\n");
-                Console.WriteLine($"-----------------\n AI {_ollama.Model} responded: \n{aiCleanedResponse}\n-----------------\n");
+                Console.WriteLine($"-----------------\n AI {_kernelService.Model} responded: \n{aiCleanedResponse}\n-----------------\n");
 
                 var embedFinal = new DiscordEmbedBuilder
                 {
@@ -200,13 +217,14 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         Name = $"{message}",
                         IconUrl = ctx.User.AvatarUrl
                     },
-                    Title = $"Model:  {_ollama.Model} \n {givenFile} \n\nResponse",
-                    Description = aiCleanedResponse,
+                    Title = $"Model:  {_kernelService.Model} \n {givenFile} \n\nResponse",
+                    Description = $"{aiCleanedResponse}\n {webLinks}",
                     ImageUrl = givenImage,
-                    Color = DiscordColor.CornflowerBlue
+                    Color = DiscordColor.CornflowerBlue,
                 };
 
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
+                serperLinks.Clear();
             }
             // When AI is done accept new request. Even if there is error it should accept again shortly
             finally { userLock.Release(); }

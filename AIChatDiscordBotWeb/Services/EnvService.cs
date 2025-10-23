@@ -47,6 +47,7 @@ namespace AIChatDiscordBotWeb.Services
                         // Decode \n into real newline
                     case "SYSTEM_MESSAGE": config.SYSTEM_MESSAGE = 
                             value.Replace("\\n", Environment.NewLine); break;
+                    case "SERPER_API_KEY": config.SERPER_API_KEY = value; break;
                 }
             }
             return config;
@@ -60,7 +61,8 @@ namespace AIChatDiscordBotWeb.Services
                 $"LOCAL_HOST={config.LOCAL_HOST}",
                 $"MODEL={config.MODEL}",
                 $"ALLOWED_CHANNEL_IDS={string.Join(",", config.ALLOWED_CHANNEL_IDS)}",
-                $"SYSTEM_MESSAGE={config.SYSTEM_MESSAGE?.Replace(Environment.NewLine, "\\n")}"
+                $"SYSTEM_MESSAGE={config.SYSTEM_MESSAGE?.Replace(Environment.NewLine, "\\n")}",
+                $"SERPER_API_KEY={config.SERPER_API_KEY}"
             };
 
             await File.WriteAllLinesAsync(_filePath, lines);

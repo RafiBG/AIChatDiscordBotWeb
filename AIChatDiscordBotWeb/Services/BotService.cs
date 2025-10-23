@@ -2,6 +2,9 @@
 using AIChatDiscordBotWeb.SlashCommadns;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 
 namespace AIChatDiscordBotWeb.Services
@@ -33,6 +36,13 @@ namespace AIChatDiscordBotWeb.Services
                 Intents = DiscordIntents.All,
                 AutoReconnect = true
             });
+
+            _client.UseInteractivity(new InteractivityConfiguration()
+            {
+                PollBehaviour = PollBehaviour.KeepEmojis,
+                Timeout = TimeSpan.FromSeconds(30)
+            });
+
 
             _client.Ready += async (s, e) =>
             {
