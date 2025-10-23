@@ -19,25 +19,6 @@ namespace AIChatDiscordBotWeb.Services
             PruneHistory(userId);
         }
 
-        //public void AddUserMessage(ulong userId, string username, string userMessage, string systemMessage)
-        //{
-        //    if (!_memory.ContainsKey(userId))
-        //    {
-        //        var history = new ChatHistory(systemMessage);
-        //        _memory[userId] = history;
-        //    }
-
-        //    _memory[userId].AddUserMessage($"{username}: {userMessage}");
-
-        //    // Keep history small (System message + 10 last user/assistant messages)
-        //    const int maxMessages = 11;
-        //    while (_memory[userId].Count > maxMessages)
-        //    {
-        //        // Remove the oldest non-system message (always at index 1 since system is 0)
-        //        _memory[userId].RemoveAt(1);
-        //    }
-        //}
-
         public void AddAssistantMessage(ulong userId, string response)
         {
             var history = _userHistories.GetOrAdd(userId, _ => new ChatHistory());
@@ -45,16 +26,12 @@ namespace AIChatDiscordBotWeb.Services
             PruneHistory(userId);
         }
 
-        // Inside ChatMemoryService.cs
-
         public ChatHistory GetUserMessages(ulong userId, string systemMessage)
         {
             // Retrieve the user's conversation history (which contains User/Assistant messages)
             var history = _userHistories.GetOrAdd(userId, _ => new ChatHistory());
 
-            // Create a new ChatHistory object with the System Message prepended.
-            // This is the most crucial step for maintaining context/role.
-            var historyWithSystemMessage = new ChatHistory(systemMessage); // This adds the system message
+            var historyWithSystemMessage = new ChatHistory(systemMessage);
 
             // Append all existing User and Assistant messages from the stored history
             foreach (var message in history.Where(m => m.Role != AuthorRole.System))
@@ -69,7 +46,6 @@ namespace AIChatDiscordBotWeb.Services
         {
             if (_userHistories.TryGetValue(userId, out var history))
             {
-                // 1. Find the System Message object in the current history (if it exists)
                 var systemMessage = history.FirstOrDefault(m => m.Role == AuthorRole.System);
 
                 // Only count User and Assistant messages to determine which to prune
@@ -88,13 +64,12 @@ namespace AIChatDiscordBotWeb.Services
 
                     var newHistory = new ChatHistory();
 
-                    // 2. Always add the system message first if it was present
+                    // Add the system message first if it was present
                     if (systemMessage != null)
                     {
                         newHistory.Add(systemMessage);
                     }
 
-                    // 3. Add the kept user/assistant messages
                     foreach (var msg in messageKeep)
                     {
                         newHistory.Add(msg);

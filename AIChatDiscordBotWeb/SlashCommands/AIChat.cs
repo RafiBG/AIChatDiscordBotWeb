@@ -116,7 +116,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 // If there's an image, download bytes and add an ImageContent part
                 if (image != null)
                 {
-                    // Consider reusing/injecting a single HttpClient in production for efficiency
                     using var httpImage = new HttpClient();
                     imageBytes = await httpImage.GetByteArrayAsync(image.Url);
                     givenImage = image.Url;
