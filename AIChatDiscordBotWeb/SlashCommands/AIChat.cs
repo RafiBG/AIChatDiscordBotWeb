@@ -27,7 +27,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private string givenFile;
         private string givenImage;
         private string webLinks;
-        private string generatedImage;
+        //private string generatedImage;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
@@ -137,7 +137,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 
                 var ollamaSettings = new OllamaPromptExecutionSettings
                 {
-                    //  Tells the model it can use any registered function/tool/plugin
+                    // Tells the model it can use any registered function/tool/plugin
                     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
                 };
 
@@ -229,8 +229,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
 
                 // Now, if the user asked to generate an image, start a background watcher
-                if (message.Contains("generate image", StringComparison.OrdinalIgnoreCase))
+                if (ComfyUITool.IsImageGenerating)
                 {
+                    ComfyUITool.IsImageGenerating = false;
+
                     _ = Task.Run(async () =>
                     {
                         try
@@ -245,8 +247,9 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 
                             DateTime start = DateTime.UtcNow;
                             string latestImage = null;
+                            int maxTimeWait = 270;
                             // Check every 3 sec for up to 270 sec/4.5 min
-                            while ((DateTime.UtcNow - start).TotalSeconds < 270)
+                            while ((DateTime.UtcNow - start).TotalSeconds < maxTimeWait)
                             {
                                 var files = Directory.GetFiles(outputFolder, "*.png", SearchOption.TopDirectoryOnly);
                                 if (files.Length > 0)
@@ -265,7 +268,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 
                             if (string.IsNullOrEmpty(latestImage))
                             {
-                                Console.WriteLine($"[Gen image] No new image found after 90s.");
+                                Console.WriteLine($"[Gen image] No new image found after {maxTimeWait}s.");
                                 return;
                             }
 
@@ -365,10 +368,17 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         }
         // If message is too long cut it 
         // This is done to not crash the app
-        private string Truncate(string text, int maxLength = 256)
+        private string Truncate(string text, int maxLength = 250)
         {
-            if (string.IsNullOrEmpty(text)) return text;
-            return text.Length <= maxLength ? text : text.Substring(0, maxLength - 3) + "...";
+            if (text.Length <= maxLength)
+            {
+                return text;
+            }
+            else
+            {
+                // Otherwise, cut it to the max length and add "..."
+                return text.Substring(0, maxLength - 3) + "...";
+            }
         }
     }
 }

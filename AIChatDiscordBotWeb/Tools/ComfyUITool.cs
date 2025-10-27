@@ -7,44 +7,31 @@ namespace AIChatDiscordBotWeb.Tools
 {
     public class ComfyUITool
     {
-        private readonly ComfyUIService _service;
-
-        // Constructor takes only the API URL
-        public ComfyUITool(string comfyUiApi)
-        {
-            _service = new ComfyUIService(comfyUiApi);
-        }
-
-        [KernelFunction("generate_image")]
-        [Description("Generate an image using the ComfyUI Lumina 2 workflow from a given text prompt. It may take some time to finish.")]
-        public async Task<string> GenerateImageAsync(string prompt)
-        {
-            return await _service.GenerateImageAsync(prompt);
-        }
-    }
-
-    public class ComfyUIService
-    {
         private readonly string _comfyUiApi;
 
-        public ComfyUIService(string comfyUiApi)
+        public static bool IsImageGenerating { get; set; } = false;
+
+        public ComfyUITool(string comfyUiApi)
         {
             _comfyUiApi = comfyUiApi;
         }
 
-        public async Task<string?> GenerateImageAsync(string userPrompt)
+        [KernelFunction("generate_image")]
+        [Description("Generate an image using the ComfyUI Lumina 2 workflow from a given text prompt. It may take some time to finish.")]
+        public async Task<string> GenerateImageAsync(string userPrompt)
         {
+            IsImageGenerating = true;
             try
             {
                 var random = new Random();
-                int randomSeed = random.Next(1000, 999999999);
+                int randomSeed = random.Next(10000, 999999999);
 
                 using var http = new HttpClient();
 
                 string genText = "You are an assistant designed to generate superior images with a superior degree of text-image alignment based on the following prompt: " +
                                  $"<Prompt Start> {userPrompt}";
 
-                // Build the JSON prompt
+                // Build the JSON workflow payload
                 var jsonObject = new
                 {
                     prompt = new Dictionary<string, object>
@@ -79,7 +66,7 @@ namespace AIChatDiscordBotWeb.Tools
                             inputs = new
                             {
                                 seed = randomSeed,
-                                steps = 25,
+                                steps = 20,
                                 cfg = 4,
                                 sampler_name = "res_multistep",
                                 scheduler = "simple",
@@ -98,31 +85,35 @@ namespace AIChatDiscordBotWeb.Tools
                         },
                         ["9"] = new
                         {
-                            inputs = new { filename_prefix = "NetaYume_Lumina_Test", images = new object[] { "8", 0 } },
+                            inputs = new { filename_prefix = "Lumina2_Num_", images = new object[] { "8", 0 } },
                             class_type = "SaveImage"
                         }
                     }
                 };
 
+                // Serialize to JSON
                 var json = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions { WriteIndented = true });
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+                // Send to ComfyUI API
                 var response = await http.PostAsync($"{_comfyUiApi}/prompt", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    IsImageGenerating = false;
                     var errorText = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"ComfyUI failed: {response.StatusCode} - {errorText}");
-                    return null;
+                    Console.WriteLine($"[ComfyUI] Failed: {response.StatusCode} - {errorText}");
+                    return $"ComfyUI error: {response.StatusCode}";
                 }
 
-                Console.WriteLine("Image generation started...");
-                return "Image generation started";
+                Console.WriteLine("[ComfyUI] Image generation started successfully.");
+                return "Image generation started successfully.";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ComfyUI error: {ex.Message}");
-                return null;
+                IsImageGenerating = false;
+                Console.WriteLine($"[ComfyUI] Error: {ex.Message}");
+                return $"Error: {ex.Message}";
             }
         }
     }

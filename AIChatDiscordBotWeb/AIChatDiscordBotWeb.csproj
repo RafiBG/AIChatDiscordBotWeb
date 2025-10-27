@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="image\**" />
+    <Compile Remove="Tools\ComfyUIImages\**" />
     <Content Remove="image\**" />
+    <Content Remove="Tools\ComfyUIImages\**" />
     <EmbeddedResource Remove="image\**" />
+    <EmbeddedResource Remove="Tools\ComfyUIImages\**" />
     <None Remove="image\**" />
+    <None Remove="Tools\ComfyUIImages\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,10 +30,6 @@
 
   <ItemGroup>
     <Content Include=".env" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Tools\ComfyUIImages\" />
   </ItemGroup>
 
 </Project>
