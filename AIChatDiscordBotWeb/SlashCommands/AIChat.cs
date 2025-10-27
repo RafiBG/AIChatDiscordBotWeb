@@ -20,12 +20,14 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels = new();
         private readonly ChatMemoryService _chatMemory;
+        private readonly EnvConfig _config;
 
         // Per-user locks to avoid same user sending multiple concurrent requests
         private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _userLocks = new();
         private string givenFile;
         private string givenImage;
         private string webLinks;
+        private string generatedImage;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
@@ -35,6 +37,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             _systemMessage = config.SYSTEM_MESSAGE;
             _allowedChannels = config.ALLOWED_CHANNEL_IDS;
             _chatMemory = chatMemory;
+            _config = config;
         }
 
         [SlashCommand("ask", "Ask something to the AI")]
@@ -144,7 +147,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
                     {
-                        Name = $"{message}",
+                        Name = Truncate(message, 247),
                         IconUrl = ctx.User.AvatarUrl
                     },
                     Title = $"Model:  {_kernelService.Model} \n {givenFile} \n\nResponse",
@@ -171,7 +174,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                             {
                                 Author = new DiscordEmbedBuilder.EmbedAuthor
                                 {
-                                    Name = message,
+                                    Name = Truncate(message, 247),
                                     IconUrl = ctx.User.AvatarUrl
                                 },
                                 Title = $"Model: {_kernelService.Model}\n {givenFile}\n\nResponse",
@@ -214,16 +217,85 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
                     {
-                        Name = $"{message}",
+                        Name = Truncate(message,247),
                         IconUrl = ctx.User.AvatarUrl
                     },
-                    Title = $"Model:  {_kernelService.Model} \n {givenFile} \n\nResponse",
-                    Description = $"{aiCleanedResponse}\n {webLinks}",
-                    ImageUrl = givenImage,
-                    Color = DiscordColor.CornflowerBlue,
+                    Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
+                    Description = $"{aiCleanedResponse}\n{webLinks}",
+                    Color = DiscordColor.CornflowerBlue
                 };
 
+                // Update message with the AI text first
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
+
+                // Now, if the user asked to generate an image, start a background watcher
+                if (message.Contains("generate image", StringComparison.OrdinalIgnoreCase))
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            string outputFolder = @$"{_config.COMFYUI_IMAGE_PATH}";
+                            Console.WriteLine($"[ComfyUI image] Watching for new image in: {outputFolder}");
+
+                            // Remember the most recent file before generation starts
+                            string lastKnown = Directory.GetFiles(outputFolder, "*.png")
+                                .OrderByDescending(f => File.GetCreationTimeUtc(f))
+                                .FirstOrDefault();
+
+                            DateTime start = DateTime.UtcNow;
+                            string latestImage = null;
+                            // Check every 3 sec for up to 270 sec/4.5 min
+                            while ((DateTime.UtcNow - start).TotalSeconds < 270)
+                            {
+                                var files = Directory.GetFiles(outputFolder, "*.png", SearchOption.TopDirectoryOnly);
+                                if (files.Length > 0)
+                                {
+                                    var newest = files.OrderByDescending(f => File.GetCreationTimeUtc(f)).FirstOrDefault();
+
+                                    if (newest != lastKnown && File.Exists(newest))
+                                    {
+                                        latestImage = newest;
+                                        break;
+                                    }
+                                }
+                                // Check every 3 seconds
+                                await Task.Delay(3000);
+                            }
+
+                            if (string.IsNullOrEmpty(latestImage))
+                            {
+                                Console.WriteLine($"[Gen image] No new image found after 90s.");
+                                return;
+                            }
+
+                            string fileName = Path.GetFileName(latestImage);
+
+                            var embedWithImage = new DiscordEmbedBuilder
+                            {
+                                Author = new DiscordEmbedBuilder.EmbedAuthor
+                                {
+                                    Name = Truncate(message, 247),
+                                    IconUrl = ctx.User.AvatarUrl
+                                },
+                                Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
+                                Description = $"{aiCleanedResponse}\n{webLinks}",
+                                ImageUrl = $"attachment://{fileName}",
+                                Color = DiscordColor.CornflowerBlue
+                            };
+
+                            // Edit the last message to include the image
+                            await sendMessage.ModifyAsync(new DiscordMessageBuilder()
+                                .AddEmbed(embedWithImage)
+                                .AddFile(fileName, File.OpenRead(latestImage)));
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error while attaching generated image: {ex.Message}");
+                        }
+                    });
+                }
+
                 serperLinks.Clear();
             }
             // When AI is done accept new request. Even if there is error it should accept again shortly
@@ -290,6 +362,13 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 sb.Append(text.Text);
             }
             return sb.ToString();
+        }
+        // If message is too long cut it 
+        // This is done to not crash the app
+        private string Truncate(string text, int maxLength = 256)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text.Length <= maxLength ? text : text.Substring(0, maxLength - 3) + "...";
         }
     }
 }

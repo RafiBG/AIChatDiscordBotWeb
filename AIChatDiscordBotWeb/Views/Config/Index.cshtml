@@ -42,8 +42,21 @@
     <div class="mb-3">
         <label>Serper web api key</label>
         <input asp-for="SERPER_API_KEY" type="password" id="serper" class="form-control" value="@Model.SERPER_API_KEY" />
-        <p>Get your custom api key for web search from <a href="https://serper.dev/api-keys">here</a> </p>
         <input type="checkbox" onclick="serperShow()">Show Serper API
+        <p>Get your custom api key for web search from <a href="https://serper.dev/api-keys">here</a> </p>
+    </div>
+
+    <div class="mb-3">
+        <h4>ComfyUI config</h4>
+        <label>ComfyUI Api</label>
+        <input asp-for="COMFYUI_API" class="form-control" />
+        <p>Example: http://127.0.0.1:8000 (this is default numbers for ComfyUI api if you didnt change to custom)</p>
+    </div>
+
+    <div class="mb-3">
+        <label>ComfyUI path to the generated images</label>
+        <input asp-for="COMFYUI_IMAGE_PATH" class="form-control" />
+        <p>Example: C:\Users\YourPCName\Documents\ComfyUI\output (this is default numbers for ComfyUI image generation folder if you didnt change to custom)</p>
     </div>
     <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>
     <button type="submit" class="btn btn-primary">Save</button>

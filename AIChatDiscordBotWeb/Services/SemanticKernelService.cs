@@ -23,6 +23,7 @@ namespace AIChatDiscordBotWeb.Services
             // Adding tools/plugins for the AI chatbot to use 
             builder.Plugins.AddFromType<TimeTool>();
             builder.Plugins.AddFromObject(new SerperSearchTool(config.SERPER_API_KEY),"SerperSearchTool");
+            builder.Plugins.AddFromObject(new ComfyUITool(config.COMFYUI_API), "ComfyUITool");
 
             _kernel = builder.Build();
         }

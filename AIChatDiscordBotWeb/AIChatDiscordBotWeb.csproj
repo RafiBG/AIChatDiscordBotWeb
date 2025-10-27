@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="image\**" />
+    <Content Remove="image\**" />
+    <EmbeddedResource Remove="image\**" />
+    <None Remove="image\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="DSharpPlus" Version="4.5.1" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.5.1" />
@@ -22,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="image\" />
+    <Folder Include="Tools\ComfyUIImages\" />
   </ItemGroup>
 
 </Project>
