@@ -40,6 +40,7 @@
     </div>
 
     <div class="mb-3">
+        <h4>Serper (Web search) config</h4>
         <label>Serper web api key</label>
         <input asp-for="SERPER_API_KEY" type="password" id="serper" class="form-control" value="@Model.SERPER_API_KEY" />
         <input type="checkbox" onclick="serperShow()">Show Serper API
@@ -56,7 +57,7 @@
     <div class="mb-3">
         <label>ComfyUI path to the generated images</label>
         <input asp-for="COMFYUI_IMAGE_PATH" class="form-control" />
-        <p>Example: C:\Users\YourPCName\Documents\ComfyUI\output (this is default numbers for ComfyUI image generation folder if you didnt change to custom)</p>
+        <p>Example: C:\Users\YourPCName\Documents\ComfyUI\output (this is default path for ComfyUI image generation folder if you didnt change to custom)</p>
     </div>
     <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>
     <button type="submit" class="btn btn-primary">Save</button>

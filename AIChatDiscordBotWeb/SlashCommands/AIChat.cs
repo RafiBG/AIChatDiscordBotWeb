@@ -228,7 +228,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 // Update message with the AI text first
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
 
-                // Now, if the user asked to generate an image, start a background watcher
                 if (ComfyUITool.IsImageGenerating)
                 {
                     ComfyUITool.IsImageGenerating = false;

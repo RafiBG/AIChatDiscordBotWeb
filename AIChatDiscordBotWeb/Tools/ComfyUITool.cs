@@ -31,7 +31,7 @@ namespace AIChatDiscordBotWeb.Tools
                 string genText = "You are an assistant designed to generate superior images with a superior degree of text-image alignment based on the following prompt: " +
                                  $"<Prompt Start> {userPrompt}";
 
-                // Build the JSON workflow payload
+                // JSON workflow payload
                 var jsonObject = new
                 {
                     prompt = new Dictionary<string, object>
@@ -53,7 +53,7 @@ namespace AIChatDiscordBotWeb.Tools
                         },
                         ["13"] = new
                         {
-                            inputs = new { width = 1024, height = 1024, batch_size = 1 },
+                            inputs = new { width = 512, height = 512, batch_size = 1 },
                             class_type = "EmptySD3LatentImage"
                         },
                         ["11"] = new
@@ -91,7 +91,6 @@ namespace AIChatDiscordBotWeb.Tools
                     }
                 };
 
-                // Serialize to JSON
                 var json = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions { WriteIndented = true });
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
