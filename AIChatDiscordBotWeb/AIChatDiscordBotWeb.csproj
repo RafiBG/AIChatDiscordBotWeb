@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="image\**" />
+    <Compile Remove="Tools\ComfyUIImages\**" />
+    <Content Remove="image\**" />
+    <Content Remove="Tools\ComfyUIImages\**" />
+    <EmbeddedResource Remove="image\**" />
+    <EmbeddedResource Remove="Tools\ComfyUIImages\**" />
+    <None Remove="image\**" />
+    <None Remove="Tools\ComfyUIImages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="DSharpPlus" Version="4.5.1" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.5.1" />
@@ -19,10 +30,6 @@
 
   <ItemGroup>
     <Content Include=".env" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="image\" />
   </ItemGroup>
 
 </Project>

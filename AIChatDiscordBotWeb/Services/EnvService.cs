@@ -48,6 +48,8 @@ namespace AIChatDiscordBotWeb.Services
                     case "SYSTEM_MESSAGE": config.SYSTEM_MESSAGE = 
                             value.Replace("\\n", Environment.NewLine); break;
                     case "SERPER_API_KEY": config.SERPER_API_KEY = value; break;
+                    case "COMFYUI_API": config.COMFYUI_API = value; break;
+                    case "COMFYUI_IMAGE_PATH": config.COMFYUI_IMAGE_PATH = value; break;
                 }
             }
             return config;
@@ -62,7 +64,9 @@ namespace AIChatDiscordBotWeb.Services
                 $"MODEL={config.MODEL}",
                 $"ALLOWED_CHANNEL_IDS={string.Join(",", config.ALLOWED_CHANNEL_IDS)}",
                 $"SYSTEM_MESSAGE={config.SYSTEM_MESSAGE?.Replace(Environment.NewLine, "\\n")}",
-                $"SERPER_API_KEY={config.SERPER_API_KEY}"
+                $"SERPER_API_KEY={config.SERPER_API_KEY}",
+                $"COMFYUI_API={config.COMFYUI_API}",
+                $"COMFYUI_IMAGE_PATH={config.COMFYUI_IMAGE_PATH}"
             };
 
             await File.WriteAllLinesAsync(_filePath, lines);
