@@ -50,6 +50,9 @@ namespace AIChatDiscordBotWeb.Services
                     case "SERPER_API_KEY": config.SERPER_API_KEY = value; break;
                     case "COMFYUI_API": config.COMFYUI_API = value; break;
                     case "COMFYUI_IMAGE_PATH": config.COMFYUI_IMAGE_PATH = value; break;
+                    case "MULTI_MODEL_1": config.MULTI_MODEL_1 = value; break;
+                    case "MULTI_MODEL_2": config.MULTI_MODEL_2 = value; break;
+                    case "MULTI_MODEL_3": config.MULTI_MODEL_3 = value; break;
                 }
             }
             return config;
@@ -66,7 +69,10 @@ namespace AIChatDiscordBotWeb.Services
                 $"SYSTEM_MESSAGE={config.SYSTEM_MESSAGE?.Replace(Environment.NewLine, "\\n")}",
                 $"SERPER_API_KEY={config.SERPER_API_KEY}",
                 $"COMFYUI_API={config.COMFYUI_API}",
-                $"COMFYUI_IMAGE_PATH={config.COMFYUI_IMAGE_PATH}"
+                $"COMFYUI_IMAGE_PATH={config.COMFYUI_IMAGE_PATH}",
+                $"MULTI_MODEL_1={config.MULTI_MODEL_1}",
+                $"MULTI_MODEL_2={config.MULTI_MODEL_2}",
+                $"MULTI_MODEL_3={config.MULTI_MODEL_3}"
             };
 
             await File.WriteAllLinesAsync(_filePath, lines);

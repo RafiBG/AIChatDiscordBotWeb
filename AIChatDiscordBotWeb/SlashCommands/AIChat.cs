@@ -222,7 +222,8 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     },
                     Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
                     Description = $"{aiCleanedResponse}\n{webLinks}",
-                    Color = DiscordColor.CornflowerBlue
+                    Color = DiscordColor.CornflowerBlue,
+                    ImageUrl = givenImage
                 };
 
                 // Update message with the AI text first
@@ -332,7 +333,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             var embed = new DiscordEmbedBuilder
             {
                 Title = "AI Bot Commands",
-                Description = "**/ask** - Ask the AI: Upload text (PDF, DOCX, TXT) or an image.\n" +
+                Description = "**/ask** - Ask the AI: Upload text (PDF, DOCX, TXT) or an image. It can generate image or search the web if asked about it\n" +
                               "**/forgetme** - Forget your chat only\n" +
                               "**/reset** - Reset all chats\n" +
                               "**/help** - Show this help",
@@ -367,7 +368,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         }
         // If message is too long cut it 
         // This is done to not crash the app
-        private string Truncate(string text, int maxLength = 250)
+        public string Truncate(string text, int maxLength = 250)
         {
             if (text.Length <= maxLength)
             {

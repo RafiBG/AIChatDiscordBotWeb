@@ -59,6 +59,27 @@
         <input asp-for="COMFYUI_IMAGE_PATH" class="form-control" />
         <p>Example: C:\Users\YourPCName\Documents\ComfyUI\output (this is default path for ComfyUI image generation folder if you didnt change to custom)</p>
     </div>
+
+    <div class="mb-3">
+        <h4>Multi-Models config</h4>
+        <p>This models will be used in the command /ask_multi</p>
+        <label>Multi Model 1</label>
+        <input asp-for="MULTI_MODEL_1" class="form-control" />
+        <p>Write the whole name as shown in ollama. For model 1</p>
+    </div>
+
+    <div class="mb-3">
+        <label>Multi Model 2</label>
+        <input asp-for="MULTI_MODEL_2" class="form-control" />
+        <p>Write the whole name as shown in ollama. For model 2</p>
+    </div>
+
+    <div class="mb-3">
+        <label>Multi Model 3</label>
+        <input asp-for="MULTI_MODEL_3" class="form-control" />
+        <p>Write the whole name as shown in ollama. For model 3</p>
+    </div>
+
     <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>
     <button type="submit" class="btn btn-primary">Save</button>
 

@@ -1,11 +1,13 @@
 ﻿using AIChatDiscordBotWeb.Models;
 using AIChatDiscordBotWeb.SlashCommadns;
+using AIChatDiscordBotWeb.SlashCommands;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
+using DSharpPlus.VoiceNext;
 
 namespace AIChatDiscordBotWeb.Services
 {
@@ -36,6 +38,7 @@ namespace AIChatDiscordBotWeb.Services
                 Intents = DiscordIntents.All,
                 AutoReconnect = true
             });
+            //_client.UseVoiceNext();
 
             _client.UseInteractivity(new InteractivityConfiguration()
             {
@@ -43,6 +46,10 @@ namespace AIChatDiscordBotWeb.Services
                 Timeout = TimeSpan.FromSeconds(30)
             });
 
+            _client.UseVoiceNext(new VoiceNextConfiguration
+            {
+                EnableIncoming = true
+            });
 
             _client.Ready += async (s, e) =>
             {
@@ -57,7 +64,11 @@ namespace AIChatDiscordBotWeb.Services
             {
                 Services = _serviceProvider
             });
+
+            // Registers slash commands from this classes
             slash.RegisterCommands<AIChat>();
+            slash.RegisterCommands<MultiModel>();
+            //slash.RegisterCommands<VoiceRecorder>();
 
             await _client.ConnectAsync();
             _isRunning = true;
