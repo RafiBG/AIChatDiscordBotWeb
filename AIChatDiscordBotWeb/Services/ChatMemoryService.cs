@@ -4,6 +4,10 @@ using System.Collections.Concurrent;
 
 namespace AIChatDiscordBotWeb.Services
 {
+    /// <summary>
+    /// Service to manage short chat memory for users. It stores recent messages in memory.
+    /// It prunes old messages to keep the history size manageable. Messages are lost on restart.
+    /// </summary>
     public class ChatMemoryService
     {
         private readonly ConcurrentDictionary<ulong, ChatHistory> _userHistories = new();

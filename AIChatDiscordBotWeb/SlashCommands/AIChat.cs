@@ -55,6 +55,9 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 return;
             }
 
+            string finalMessage = message;
+
+
             // Per user lock
             var userId = ctx.User.Id;
             var userLock = _userLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
@@ -77,6 +80,27 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 string username = ctx.User.Username;
                 string fileContent = null;
                 byte[] imageBytes = null;
+
+                //// TODO: Handle file upload and import to long memory  and not just read the whole file like below
+                //if (file != null)
+                //{
+                //    givenFile = $"File uploaded: {file.FileName}";
+                //    Console.WriteLine($"Processing file: {file.FileName}");
+
+                //    // Download file to temp path
+                //    using var http = new HttpClient();
+                //    var fileBytes = await http.GetByteArrayAsync(file.Url);
+                //    var tempPath = Path.GetTempFileName() + Path.GetExtension(file.FileName);
+                //    await File.WriteAllBytesAsync(tempPath, fileBytes);
+
+                //    // Import to Memory (Handles PDF/Docx/Txt automatically)
+                //    var tags = new TagCollection { { "user_id", userId.ToString() }, { "type", "document" } };
+                //    await _kernelService.Memory.ImportDocumentAsync(tempPath, tags: tags);
+
+                //    finalMessage += $"\n\n[SYSTEM: User uploaded file '{file.FileName}'. It is saved in memory. Use 'recall_memory' to read it.]";
+
+                //    File.Delete(tempPath);
+                //}
 
                 if (file != null)
                 {
@@ -102,8 +126,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     }
                 }
 
-                string finalMessage = message;
-
                 if (!string.IsNullOrWhiteSpace(fileContent))
                 {
                     finalMessage += $"\n\n[Attached file content {file.FileName}]:\n {fileContent}";
@@ -113,8 +135,9 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 }
 
                 var userMessageContent = new ChatMessageContent();
-
+                // Add the user message 
                 userMessageContent.Items.Add(new TextContent(finalMessage));
+
 
                 // If there's an image, download bytes and add an ImageContent part
                 if (image != null)
@@ -186,9 +209,11 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         }
                     }
                 }
+
                 aiFullResponse = sb.ToString();
+                Console.WriteLine(aiFullResponse);
                 // Fallback in case Ollama gave nothing
-                if (string.IsNullOrEmpty(aiFullResponse))
+                if (string.IsNullOrWhiteSpace(aiFullResponse))
                 {
                     aiFullResponse = "Error: No respone from AI";
                     Console.WriteLine("Error: No respone from Ollama");
@@ -220,13 +245,12 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         Name = Truncate(message,247),
                         IconUrl = ctx.User.AvatarUrl
                     },
-                    Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
+                    Title = $"Model: {_kernelService.Model}\n{givenFile}\n {VectorMemoryTool.memorySavedOrPulled}\n\nResponse",
                     Description = $"{aiCleanedResponse}\n{webLinks}",
                     Color = DiscordColor.CornflowerBlue,
                     ImageUrl = givenImage
                 };
 
-                // Update message with the AI text first
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
 
                 if (ComfyUITool.IsImageGenerating)

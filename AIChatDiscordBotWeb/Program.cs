@@ -15,10 +15,11 @@ builder.Services.AddSingleton<EnvConfig>(sp =>
     return envService.LoadAsync().Result;
 });
 
-// Register OllamaService (depends on EnvConfig)
+// Register SemanticService Ollama (depends on EnvConfig)
 builder.Services.AddSingleton<SemanticKernelService>();
 
 builder.Services.AddSingleton<ChatMemoryService>();
+builder.Services.AddSingleton<KernelMemoryService>();
 
 // Register BotService (needs EnvService + IServiceProvider)
 builder.Services.AddSingleton<BotService>(sp =>
