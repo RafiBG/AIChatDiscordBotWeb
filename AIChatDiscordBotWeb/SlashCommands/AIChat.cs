@@ -219,7 +219,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     Console.WriteLine("Error: No respone from Ollama");
                 }
 
-                Console.WriteLine($"Raw response (check thinking models) \n\n {aiFullResponse}");
+                //Console.WriteLine($"Raw response (check thinking models) \n\n {aiFullResponse}");
 
                 var serperLinks = SerperSearchTool.LatestLinks;
 
@@ -357,11 +357,17 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             var embed = new DiscordEmbedBuilder
             {
                 Title = "AI Bot Commands",
-                Description = "**/ask** - Ask the AI: Upload text (PDF, DOCX, TXT) or an image. It can generate image or search the web if asked about it\n" +
-                              "**/forgetme** - Forget your chat only\n" +
-                              "**/reset** - Reset all chats\n" +
-                              "**/help** - Show this help",
-                Color = DiscordColor.White,
+                Description =
+                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, create code, get summaries, translate text, or let the bot remember things.\n\n" +
+                "**/ask_multi** - Ask three different AIs same question and get summarie of all the answers.\n" +
+                "**/forgetme** - Clear your personal conversation memory only.\n" +
+                "**/reset** - Reset all conversations and bot context.\n" +
+                "**/help** - Show this help message." +
+                "**Voice Features**\n" +
+                "This bot can talk in voice channels using a second helper bot. Use the commands below when the helper bot is added.\n" +
+                "**/join** - The talking bot joins your current voice channel and can talk with you.\n" +
+                "**/leave** - The talking bot leaves the voice channel.\n\n",
+                Color = DiscordColor.White
             };
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
