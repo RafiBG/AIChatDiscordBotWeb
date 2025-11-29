@@ -39,14 +39,14 @@ Built with **C# ASP.NET Core Web App (MVC)** on **.NET 9.0**.
 2.  Create a new application and go to the **Bot** tab.
 3.  **Privileged Gateway Intents:** Scroll down and enable the intents shown below:
     ![privilage](https://github.com/user-attachments/assets/f6a7ae67-acf6-4d11-a479-7b55df3fab02)
-4.  **Bot Permissions:** Ensure the bot has the following permissions enabled:
+4.  **Installation:** Ensure the bot has the following permissions enabled:
     ![bot](https://github.com/user-attachments/assets/61b00634-6aee-474f-99e3-549f142380e4)
-5.  Copy your **Bot Token**; you will need this for the coinfig.
+5.  Copy your **Bot Token**. You will need this for the coinfig.
 
 ### 2. Ollama Setup (The Brain)
 1.  Download and install [Ollama](https://ollama.com/).
 2.  Open your console/terminal and run:
-    ```bash
+    ```
     ollama serve
     ```
     *This must be running in the background for the bot to work.*
@@ -54,7 +54,7 @@ Built with **C# ASP.NET Core Web App (MVC)** on **.NET 9.0**.
     ![comm](https://github.com/user-attachments/assets/c8af5b48-042d-4a74-a9d5-e5a5b798a010)
 4.  Download a model (e.g., `ollama pull PetrosStav/gemma3-tools:4b`) via the command line.
 5.  Run the list command to get the exact name:
-    ```bash
+    ```
     ollama list
     ```
     ![ModelName](https://github.com/user-attachments/assets/cb687521-ea53-44fe-8a0c-28db29f85d5e)
