@@ -31,7 +31,7 @@ namespace AIChatDiscordBotWeb.Tools
                 ? "https://google.serper.dev/news"
                 : "https://google.serper.dev/search";
 
-            Console.WriteLine($"Tool: Serper web starting for query: {query}");
+            Console.WriteLine($"\n[Tool] Serper web starting for query: {query}");
             //Console.WriteLine($"Tool: Endpoint: {endpoint}");
 
             var payload = new { q = query };
@@ -44,7 +44,7 @@ namespace AIChatDiscordBotWeb.Tools
             try
             {
                 var response = await _http.SendAsync(request);
-                Console.WriteLine($"Tool: Serper API status: {response.StatusCode}");
+                Console.WriteLine($"\n[Tool] Serper API status: {response.StatusCode}");
 
                 var responseBody = await response.Content.ReadAsStringAsync();
                 //Console.WriteLine($"Tool: Serper API content: {responseBody}");
@@ -73,7 +73,7 @@ namespace AIChatDiscordBotWeb.Tools
                 }
                 else
                 {
-                    Console.WriteLine("Tool: Serper web no results found.");
+                    Console.WriteLine("\n[Tool] Serper web no results found.");
                     sb.AppendLine("No results found.");
                 }
 
@@ -81,7 +81,7 @@ namespace AIChatDiscordBotWeb.Tools
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Tool: Exception while querying Serper: {ex.Message}");
+                Console.WriteLine($"\n[Tool] Exception while querying Serper: {ex.Message}");
                 return $"Exception while querying Serper: {ex.Message}";
             }
         }

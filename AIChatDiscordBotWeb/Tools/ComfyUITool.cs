@@ -101,17 +101,17 @@ namespace AIChatDiscordBotWeb.Tools
                 {
                     IsImageGenerating = false;
                     var errorText = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ComfyUI] Failed: {response.StatusCode} - {errorText}");
+                    Console.WriteLine($"\n[ComfyUI] Failed: {response.StatusCode} - {errorText}");
                     return $"ComfyUI error: {response.StatusCode}";
                 }
 
-                Console.WriteLine("[ComfyUI] Image generation started successfully.");
+                Console.WriteLine("\n[ComfyUI] Image generation started successfully.");
                 return "Image generation started successfully.";
             }
             catch (Exception ex)
             {
                 IsImageGenerating = false;
-                Console.WriteLine($"[ComfyUI] Error: {ex.Message}");
+                Console.WriteLine($"\n[ComfyUI] Error: {ex.Message}");
                 return $"Error: {ex.Message}";
             }
         }

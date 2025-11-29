@@ -10,5 +10,8 @@
         public string SERPER_API_KEY { get; set; }
         public string COMFYUI_API {  get; set; }
         public string COMFYUI_IMAGE_PATH { get; set; }
+        public string MULTI_MODEL_1 { get; set; }
+        public string MULTI_MODEL_2 { get; set; }
+        public string MULTI_MODEL_3 { get; set; }
     }
 }

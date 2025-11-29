@@ -1,5 +1,6 @@
 ﻿using AIChatDiscordBotWeb.Models;
 using AIChatDiscordBotWeb.SlashCommadns;
+using AIChatDiscordBotWeb.SlashCommands;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
@@ -43,7 +44,6 @@ namespace AIChatDiscordBotWeb.Services
                 Timeout = TimeSpan.FromSeconds(30)
             });
 
-
             _client.Ready += async (s, e) =>
             {
                 Console.WriteLine("\nBot is online.");
@@ -57,7 +57,10 @@ namespace AIChatDiscordBotWeb.Services
             {
                 Services = _serviceProvider
             });
+
+            // Registers slash commands from this classes
             slash.RegisterCommands<AIChat>();
+            slash.RegisterCommands<MultiModel>();
 
             await _client.ConnectAsync();
             _isRunning = true;

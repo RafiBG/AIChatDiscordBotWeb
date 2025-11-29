@@ -55,6 +55,9 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 return;
             }
 
+            string finalMessage = message;
+
+
             // Per user lock
             var userId = ctx.User.Id;
             var userLock = _userLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
@@ -77,6 +80,27 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 string username = ctx.User.Username;
                 string fileContent = null;
                 byte[] imageBytes = null;
+
+                //// TODO: Handle file upload and import to long memory  and not just read the whole file like below
+                //if (file != null)
+                //{
+                //    givenFile = $"File uploaded: {file.FileName}";
+                //    Console.WriteLine($"Processing file: {file.FileName}");
+
+                //    // Download file to temp path
+                //    using var http = new HttpClient();
+                //    var fileBytes = await http.GetByteArrayAsync(file.Url);
+                //    var tempPath = Path.GetTempFileName() + Path.GetExtension(file.FileName);
+                //    await File.WriteAllBytesAsync(tempPath, fileBytes);
+
+                //    // Import to Memory (Handles PDF/Docx/Txt automatically)
+                //    var tags = new TagCollection { { "user_id", userId.ToString() }, { "type", "document" } };
+                //    await _kernelService.Memory.ImportDocumentAsync(tempPath, tags: tags);
+
+                //    finalMessage += $"\n\n[SYSTEM: User uploaded file '{file.FileName}'. It is saved in memory. Use 'recall_memory' to read it.]";
+
+                //    File.Delete(tempPath);
+                //}
 
                 if (file != null)
                 {
@@ -102,8 +126,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     }
                 }
 
-                string finalMessage = message;
-
                 if (!string.IsNullOrWhiteSpace(fileContent))
                 {
                     finalMessage += $"\n\n[Attached file content {file.FileName}]:\n {fileContent}";
@@ -113,8 +135,9 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 }
 
                 var userMessageContent = new ChatMessageContent();
-
+                // Add the user message 
                 userMessageContent.Items.Add(new TextContent(finalMessage));
+
 
                 // If there's an image, download bytes and add an ImageContent part
                 if (image != null)
@@ -186,15 +209,17 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         }
                     }
                 }
+
                 aiFullResponse = sb.ToString();
+                Console.WriteLine(aiFullResponse);
                 // Fallback in case Ollama gave nothing
-                if (string.IsNullOrEmpty(aiFullResponse))
+                if (string.IsNullOrWhiteSpace(aiFullResponse))
                 {
                     aiFullResponse = "Error: No respone from AI";
                     Console.WriteLine("Error: No respone from Ollama");
                 }
 
-                Console.WriteLine($"Raw response (check thinking models) \n\n {aiFullResponse}");
+                //Console.WriteLine($"Raw response (check thinking models) \n\n {aiFullResponse}");
 
                 var serperLinks = SerperSearchTool.LatestLinks;
 
@@ -220,12 +245,12 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                         Name = Truncate(message,247),
                         IconUrl = ctx.User.AvatarUrl
                     },
-                    Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
+                    Title = $"Model: {_kernelService.Model}\n{givenFile}\n {VectorMemoryTool.memorySavedOrPulled}\n\nResponse",
                     Description = $"{aiCleanedResponse}\n{webLinks}",
-                    Color = DiscordColor.CornflowerBlue
+                    Color = DiscordColor.CornflowerBlue,
+                    ImageUrl = givenImage
                 };
 
-                // Update message with the AI text first
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
 
                 if (ComfyUITool.IsImageGenerating)
@@ -332,11 +357,17 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             var embed = new DiscordEmbedBuilder
             {
                 Title = "AI Bot Commands",
-                Description = "**/ask** - Ask the AI: Upload text (PDF, DOCX, TXT) or an image.\n" +
-                              "**/forgetme** - Forget your chat only\n" +
-                              "**/reset** - Reset all chats\n" +
-                              "**/help** - Show this help",
-                Color = DiscordColor.White,
+                Description =
+                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, create code, get summaries, translate text, or let the bot remember things.\n\n" +
+                "**/ask_multi** - Ask three different AIs same question and get summarie of all the answers.\n" +
+                "**/forgetme** - Clear your personal conversation memory only.\n" +
+                "**/reset** - Reset all conversations and bot context.\n" +
+                "**/help** - Show this help message." +
+                "**Voice Features**\n" +
+                "This bot can talk in voice channels using a second helper bot. Use the commands below when the helper bot is added.\n" +
+                "**/join** - The talking bot joins your current voice channel and can talk with you.\n" +
+                "**/leave** - The talking bot leaves the voice channel.\n\n",
+                Color = DiscordColor.White
             };
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
@@ -367,7 +398,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         }
         // If message is too long cut it 
         // This is done to not crash the app
-        private string Truncate(string text, int maxLength = 250)
+        public string Truncate(string text, int maxLength = 250)
         {
             if (text.Length <= maxLength)
             {
