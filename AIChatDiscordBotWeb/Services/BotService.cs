@@ -23,7 +23,6 @@ namespace AIChatDiscordBotWeb.Services
             _serviceProvider = serviceProvider;
         }
 
-
         public async Task StartAsync()
         {
             if (_isRunning) return;
@@ -51,6 +50,14 @@ namespace AIChatDiscordBotWeb.Services
 
                 await _client.UpdateStatusAsync(
                     new DiscordActivity("/help", ActivityType.ListeningTo));
+            };
+
+            var aiChannelChat = _serviceProvider.GetRequiredService<AIGroupChat>();
+
+            // Subscribe the handler to the MessageCreated event
+            _client.MessageCreated += async (s, e) =>
+            {
+                await aiChannelChat.OnMessageCreated(s, e);
             };
 
             var slash = _client.UseSlashCommands(new SlashCommandsConfiguration

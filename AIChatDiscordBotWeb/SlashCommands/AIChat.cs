@@ -27,7 +27,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private string givenFile;
         private string givenImage;
         private string webLinks;
-        //private string generatedImage;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
@@ -45,7 +44,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             [Option("message", "Your message")] string message,
             [Option("file", "Optional file to read like pdf,txt,docx")] DiscordAttachment file = null,
             [Option("image", "Optional image to see")] DiscordAttachment image = null)
-        {   // Checks if user ask in allowed channel if there is one
+        {
+            if (ctx.User.IsBot) return; // Ignore bot messages
+
+            // Checks if user ask in allowed channel if there is one
             if (_allowedChannels.Count > 0 && !_allowedChannels.Contains(ctx.Channel.Id))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
@@ -200,7 +202,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                                     Name = Truncate(message, 247),
                                     IconUrl = ctx.User.AvatarUrl
                                 },
-                                Title = $"Model: {_kernelService.Model}\n {givenFile}\n\nResponse",
+                                Title = $"Model: {_kernelService.Model}\n {givenFile}\n [Thinking...]\n\nResponse",
                                 Description = aiFullResponse,
                                 Color = DiscordColor.CornflowerBlue
                             };
@@ -373,7 +375,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
         }
 
-        private string ExtractPdfText(byte[] pdfBytes)
+        public static string ExtractPdfText(byte[] pdfBytes)
         {
             using var ms = new MemoryStream(pdfBytes);
             using var pdf = PdfDocument.Open(ms);
@@ -385,7 +387,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             return sb.ToString();
         }
 
-        private string ExtractDocxText(byte[] docxBytes)
+        public static string ExtractDocxText(byte[] docxBytes)
         {
             using var ms = new MemoryStream(docxBytes);
             using var wordDoc = WordprocessingDocument.Open(ms, false);

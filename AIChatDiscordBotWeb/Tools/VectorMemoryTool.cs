@@ -6,8 +6,6 @@ namespace AIChatDiscordBotWeb.Tools
 {
     public class VectorMemoryTool
     {
-
-        // Correctly expects the custom wrapper service
         private readonly KernelMemoryService _memoryService;
         public static string memorySavedOrPulled = null;
 
@@ -24,8 +22,8 @@ namespace AIChatDiscordBotWeb.Tools
             [Description("The User ID provided in the system context.")] string userId)
         {
             Console.WriteLine("\n[Tool] Vector memory saved");
-            await _memoryService.SaveMemoryAsync(userId, info);
-            memorySavedOrPulled = "(memory saved)";
+            await _memoryService.SaveIndividualMemoryAsync(userId, info);
+            memorySavedOrPulled = "[Memory saved]";
             return "Memory saved successfully.";
         }
 
@@ -37,8 +35,8 @@ namespace AIChatDiscordBotWeb.Tools
             [Description("The User ID provided in the system context.")] string userId)
         {
             Console.WriteLine("\n[Tool] Vector memory recalled");
-            var answer = await _memoryService.PullMemoryAsync(userId, query);
-            memorySavedOrPulled = "(memory recalled)";
+            var answer = await _memoryService.PullIndividualMemoryAsync(userId, query);
+            memorySavedOrPulled = "[Memory recalled)";
             // Gets aswer if there is relevant info, otherwise a default message. Its like IF statement
             return answer ?? "No relevant information found in memory.";
         }

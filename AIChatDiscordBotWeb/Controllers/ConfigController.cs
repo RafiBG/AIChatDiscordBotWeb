@@ -19,13 +19,22 @@ namespace AIChatDiscordBotWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Save(EnvConfig config, string AllowedChannelIdsInput)
+        public async Task<IActionResult> Save(EnvConfig config, string AllowedChannelIdsInput, string AllowedGroupChannelIdsInput)
         {
             // Convert comma-separated input string into List<ulong>
             if (!string.IsNullOrWhiteSpace(AllowedChannelIdsInput))
             {
                 config.ALLOWED_CHANNEL_IDS = AllowedChannelIdsInput
-                    .Split(',', System.StringSplitOptions.RemoveEmptyEntries)
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(v => ulong.TryParse(v.Trim(), out var id) ? id : 0)
+                    .Where(id => id != 0)
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(AllowedGroupChannelIdsInput))
+            {
+                config.ALLOWED_GROUP_CHANNEL_IDS = AllowedGroupChannelIdsInput
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(v => ulong.TryParse(v.Trim(), out var id) ? id : 0)
                     .Where(id => id != 0)
                     .ToList();

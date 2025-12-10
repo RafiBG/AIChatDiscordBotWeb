@@ -4,6 +4,7 @@
     ViewBag.Title = "Configuration";
     // Convert list of ulong IDs into a comma-separated string for editing
     string allowedChannels = string.Join(",", Model.ALLOWED_CHANNEL_IDS ?? new List<ulong>());
+    string allowedGroupChannels = string.Join(",", Model.ALLOWED_GROUP_CHANNEL_IDS ?? new List<ulong>());
 }
 
 <h2>Bot Configuration</h2>
@@ -31,7 +32,17 @@
     <div class="mb-3">
         <label>Allowed Channel IDs</label>
         <input name="AllowedChannelIdsInput" value="@allowedChannels" class="form-control" />
+        <p>Type the channels ids that will response on /ask and other slash commands that are typed there. </p>
         <p>Comma separated for more than one  Example: 12456, 2345</p>
+        <p style="color:cornflowerblue">If you leave it empty it will response in every channel.</p>
+    </div>
+
+    <div class="mb-3">
+        <label>Allowed Group Channel IDs</label>
+        <input name="AllowedGroupChannelIdsInput" value="@allowedGroupChannels" class="form-control" />
+        <p>Type the channels ids that the bot can chat with every discord user who types there. </p>
+        <p>Comma separated for more than one  Example: 12456, 2345</p>
+        <p style="color:cornflowerblue">If you leave it empty it will response in every channel.</p>
     </div>
 
     <div class="mb-3">
@@ -78,6 +89,14 @@
         <label>Multi Model 3</label>
         <input asp-for="MULTI_MODEL_3" class="form-control" />
         <p>Write the whole name as shown in ollama. For model 3</p>
+    </div>
+
+    <div class="mb-3">
+        <h4>Long memory (RAG) config</h4>
+        <p>This models will be used in the command /ask to remember things after restart</p>
+        <label>Embeddin model</label>
+        <input asp-for="EMBEDDIN_MODEL" class="form-control" />
+        <p>Write the whole name as shown in ollama. Here is model for example that works great <a href="https://ollama.com/library/embeddinggemma">here</a></p>
     </div>
 
     <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>

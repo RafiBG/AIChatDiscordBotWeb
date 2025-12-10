@@ -22,7 +22,8 @@ namespace AIChatDiscordBotWeb.Services
         public SemanticKernelService(EnvConfig config, KernelMemoryService memoryService)
         {
             _model = config.MODEL;
-            string ollamaUrl = $"http://localhost:{config.LOCAL_HOST}";
+            //string ollamaUrl = $"http://localhost:{config.LOCAL_HOST}"; //old one that i used only to enter the numbers to connect server
+            string ollamaUrl = $"{config.LOCAL_HOST}";
             _memoryService = memoryService;
 
             // Initialize Chat Kernel Memory

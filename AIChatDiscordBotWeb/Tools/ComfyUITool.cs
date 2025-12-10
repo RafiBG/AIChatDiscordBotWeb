@@ -106,7 +106,7 @@ namespace AIChatDiscordBotWeb.Tools
                 }
 
                 Console.WriteLine("\n[ComfyUI] Image generation started successfully.");
-                return "Image generation started successfully.";
+                return "Image generation started successfully. Tell user it will take time to be ready and when is done it will show here.";
             }
             catch (Exception ex)
             {

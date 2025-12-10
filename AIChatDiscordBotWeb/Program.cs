@@ -1,5 +1,6 @@
 using AIChatDiscordBotWeb.Models;
 using AIChatDiscordBotWeb.Services;
+using AIChatDiscordBotWeb.SlashCommands;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using System.Diagnostics;
 
@@ -20,6 +21,9 @@ builder.Services.AddSingleton<SemanticKernelService>();
 
 builder.Services.AddSingleton<ChatMemoryService>();
 builder.Services.AddSingleton<KernelMemoryService>();
+
+// Register the ai group chat command
+builder.Services.AddSingleton<AIGroupChat>();
 
 // Register BotService (needs EnvService + IServiceProvider)
 builder.Services.AddSingleton<BotService>(sp =>

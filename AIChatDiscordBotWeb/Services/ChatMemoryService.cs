@@ -1,15 +1,24 @@
-﻿using Microsoft.SemanticKernel;
+﻿using AIChatDiscordBotWeb.Models;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using System.Collections.Concurrent;
 
 namespace AIChatDiscordBotWeb.Services
 {
+
     /// <summary>
     /// Service to manage short chat memory for users. It stores recent messages in memory.
     /// It prunes old messages to keep the history size manageable. Messages are lost on restart.
     /// </summary>
     public class ChatMemoryService
     {
+
+        private readonly EnvConfig _config;
+
+        public ChatMemoryService(EnvConfig config)
+        {
+            _config = config;
+        }
         private readonly ConcurrentDictionary<ulong, ChatHistory> _userHistories = new();
 
         private int MaxHistorySize = 10;
@@ -32,10 +41,17 @@ namespace AIChatDiscordBotWeb.Services
 
         public ChatHistory GetUserMessages(ulong userId, string systemMessage)
         {
+            // Ensure systemMessage is valid
+            if (string.IsNullOrWhiteSpace(systemMessage))
+            {
+                systemMessage = _config.SYSTEM_MESSAGE;
+            }
+
             // Retrieve the user's conversation history (which contains User/Assistant messages)
             var history = _userHistories.GetOrAdd(userId, _ => new ChatHistory());
 
-            var historyWithSystemMessage = new ChatHistory(systemMessage);
+            var historyWithSystemMessage = new ChatHistory();
+            historyWithSystemMessage.AddSystemMessage(systemMessage);
 
             // Append all existing User and Assistant messages from the stored history
             foreach (var message in history.Where(m => m.Role != AuthorRole.System))
