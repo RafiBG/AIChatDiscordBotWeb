@@ -37,6 +37,7 @@ namespace AIChatDiscordBotWeb.Services
                     case "BOT_TOKEN": config.BOT_TOKEN = value; break;
                     case "LOCAL_HOST": config.LOCAL_HOST = value; break;
                     case "MODEL": config.MODEL = value; break;
+                    case "API_KEY": config.API_KEY = value; break;
                     case "ALLOWED_CHANNEL_IDS":
                         config.ALLOWED_CHANNEL_IDS = value
                             .Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -73,6 +74,7 @@ namespace AIChatDiscordBotWeb.Services
                 $"BOT_TOKEN={config.BOT_TOKEN}",
                 $"LOCAL_HOST={config.LOCAL_HOST}",
                 $"MODEL={config.MODEL}",
+                $"API_KEY={config.API_KEY}",
                 $"ALLOWED_CHANNEL_IDS={string.Join(",", config.ALLOWED_CHANNEL_IDS)}",
                 $"ALLOWED_GROUP_CHANNEL_IDS={string.Join(",", config.ALLOWED_GROUP_CHANNEL_IDS)}",
                 $"SYSTEM_MESSAGE={config.SYSTEM_MESSAGE?.Replace(Environment.NewLine, "\\n")}",

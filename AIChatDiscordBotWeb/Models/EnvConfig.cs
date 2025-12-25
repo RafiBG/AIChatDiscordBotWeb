@@ -5,6 +5,7 @@
         public string BOT_TOKEN { get; set; }
         public string LOCAL_HOST { get; set; }
         public string MODEL { get; set; }
+        public string API_KEY { get; set; }
         public List<ulong> ALLOWED_CHANNEL_IDS { get; set; } = new List<ulong>();
         public List<ulong> ALLOWED_GROUP_CHANNEL_IDS { get; set; } = new List<ulong>();
         public string SYSTEM_MESSAGE { get; set; }

@@ -20,13 +20,24 @@
     <div class="mb-3">
         <label>Local Host</label>
         <input asp-for="LOCAL_HOST" class="form-control" />
-        <p>Example: http://localhost:11434 (this is default numbers for ollama if you didnt change to custom)</p>
+        <p>Example: http://localhost:11434/v1 (this is default numbers for ollama if you didnt change to custom)</p>
+        <p>Example for other Ollama PC connection:http://192.168.50.111:11434/v1</p>
+        <p>Now you can connect to ChatGPT,Gemini or Ollama that is running on other PC in the same network. Check their website for the URL connection.</p>
     </div>
 
     <div class="mb-3">
         <label>Model</label>
         <input asp-for="MODEL" class="form-control" />
         <p>Write the whole name as shown in ollama</p>
+        <p >For AI providers like ChatGPT,Gemini or others check their website on what is the full name for the model.</p>
+    </div>
+
+    <div class="mb-3">
+        <label>API KEY</label>
+        <input asp-for="API_KEY" type="password" id="api" class="form-control" value="@Model.API_KEY" />
+        <input type="checkbox" onclick="apiKeyShow()">Show api key
+        <p>Here you enter the ChatGPT,Gemini or other ai api key.</p>
+        <p>If you use Ollama then leave it</p>
     </div>
 
     <div class="mb-3">
@@ -42,7 +53,7 @@
         <input name="AllowedGroupChannelIdsInput" value="@allowedGroupChannels" class="form-control" />
         <p>Type the channels ids that the bot can chat with every discord user who types there. </p>
         <p>Comma separated for more than one  Example: 12456, 2345</p>
-        <p style="color:cornflowerblue">If you leave it empty it will response in every channel.</p>
+        <p style="color:cornflowerblue">If you leave it empty it will response in every channel. If random number then it wont response anywhere</p>
     </div>
 
     <div class="mb-3">
@@ -93,7 +104,7 @@
 
     <div class="mb-3">
         <h4>Long memory (RAG) config</h4>
-        <p>This models will be used in the command /ask to remember things after restart</p>
+        <p>This models will be used in the command /ask to remember things even after restart.</p>
         <label>Embeddin model</label>
         <input asp-for="EMBEDDIN_MODEL" class="form-control" />
         <p>Write the whole name as shown in ollama. Here is model for example that works great <a href="https://ollama.com/library/embeddinggemma">here</a></p>
@@ -114,6 +125,15 @@
 
         function serperShow() {
           var x = document.getElementById("serper");
+          if (x.type === "password") {
+            x.type = "text";
+          } else {
+            x.type = "password";
+          }
+        }
+
+        function apiKeyShow() {
+          var x = document.getElementById("api");
           if (x.type === "password") {
             x.type = "text";
           } else {

@@ -16,7 +16,7 @@ namespace AIChatDiscordBotWeb.SlashCommands
 {
     public class AIGroupChat
     {
-        private readonly SemanticKernelService _kernelService;
+        private readonly AIConnectionService _kernelService;
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels;
         private readonly ChatMemoryService _chatMemory;
@@ -25,7 +25,7 @@ namespace AIChatDiscordBotWeb.SlashCommands
         private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _channelLocks = new();
         private static readonly ConcurrentDictionary<ulong, DateTime> _lastResponseTime = new(); // Cooldown tracking
 
-        public AIGroupChat(SemanticKernelService kernelService, EnvConfig config, ChatMemoryService chatMemory)
+        public AIGroupChat(AIConnectionService kernelService, EnvConfig config, ChatMemoryService chatMemory)
         {
             _kernelService = kernelService;
             _systemMessage = config.SYSTEM_MESSAGE;
@@ -243,7 +243,7 @@ namespace AIChatDiscordBotWeb.SlashCommands
                             stopStreamingUpdates = true;
                         }
 
-                        if (!stopStreamingUpdates && (DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1500)
+                        if (!stopStreamingUpdates && (DateTime.UtcNow - lastEdit).TotalMilliseconds >= 900)
                         {
                             lastEdit = DateTime.UtcNow;
                             await botReply.ModifyAsync(aiFullResponse + " ...");
@@ -376,17 +376,16 @@ namespace AIChatDiscordBotWeb.SlashCommands
             string promptBotName = $"{botName}, AI, Bot, Assistant";
 
             string decisionPrompt = @" You are a decision agent. 
-Your ONLY job is to decide if the AI should respond to the **LAST message below**. 
-Ignore all earlier messages. 
-Focus ONLY on the last line. Output 'yes' or 'no'. CONTEXT: - 
-This is a Discord group chat. - The AI's name or nicknames: [" + promptBotName + @"] 
-RESPOND with 'yes' if **ANY** are true for the **LAST MESSAGE**: 
-1. It mentions the AI by name/nickname (e.g., AI, bot, assistant, """ + botName + @""") 
-2. It is a direct question (contains ?, or words like 'what', 'how', 'help', 'tell me') 
-3. It is a direct command/request (e.g., 'respond', 'talk to me', 'answer') 
-4. It explicitly tags the bot. DO NOT respond ('no') 
-if: - The last message is just 'hi', 'hello', 'hey' with NO name/tag. - It says 'stop', 'shut up', etc.
-**LAST MESSAGE TO EVALUATE:** " + lastMessages;
+            Your ONLY job is to decide if the AI should respond to the **LAST message below**. 
+            Ignore all earlier messages. 
+            Focus ONLY on the last line. Output 'yes' or 'no'. CONTEXT: - 
+            This is a Discord group chat. - The AI's name or nicknames: [" + promptBotName + @"] 
+            RESPOND with 'yes' if **ANY** are true for the **LAST MESSAGE**: 
+            1. It mentions the AI by name/nickname (e.g., AI, bot, assistant, """ + botName + @""") 
+            2. It is a direct question (contains ?, or words like 'what', 'how', 'help', 'tell me') 
+            3. It is a direct command/request (e.g., 'respond', 'talk to me', 'answer')  
+            if: - The last message is just 'hi', 'hello', 'hey' with NO name/tag. - It says 'stop', 'shut up', etc.
+            **LAST MESSAGE TO EVALUATE:** " + lastMessages;
 
             var kernel = _kernelService.Kernel;
             var chatService = _kernelService.ChatService;

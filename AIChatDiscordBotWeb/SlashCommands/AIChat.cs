@@ -6,6 +6,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
 using System.Collections.Concurrent;
 using System.Text;
@@ -16,7 +17,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 {
     public class AIChat : ApplicationCommandModule
     {
-        private readonly SemanticKernelService _kernelService;
+        private readonly AIConnectionService _kernelService;
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels = new();
         private readonly ChatMemoryService _chatMemory;
@@ -30,7 +31,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
-        public AIChat(SemanticKernelService kernelService, EnvConfig config, ChatMemoryService chatMemory)
+        public AIChat(AIConnectionService kernelService, EnvConfig config, ChatMemoryService chatMemory)
         {
             _kernelService = kernelService;
             _systemMessage = config.SYSTEM_MESSAGE;
@@ -136,7 +137,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     //Console.WriteLine($"User file URL given to AI: {file.Url}");
                 }
 
-                var userMessageContent = new ChatMessageContent();
+                var userMessageContent = new ChatMessageContent
+                {
+                    Role = AuthorRole.User
+                };
                 // Add the user message 
                 userMessageContent.Items.Add(new TextContent(finalMessage));
 
@@ -166,8 +170,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
                 };
 
-                string aiFullResponse = "";
-
                 var embedEmpty = new DiscordEmbedBuilder
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
@@ -180,17 +182,20 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     Color = DiscordColor.CornflowerBlue,
                 };
                 var sendMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embedEmpty));
-                var sb = new StringBuilder();
+                
+                StringBuilder sb = new StringBuilder();
+                string aiFullResponse = "";
                 var lastEdit = DateTime.UtcNow;
+                bool stopStreamingUpdates = false;
 
-
-                await foreach (var content in chatService.GetStreamingChatMessageContentsAsync(history, ollamaSettings,_kernelService.Kernel))
+                await foreach (var content in chatService.GetStreamingChatMessageContentsAsync(history, ollamaSettings, _kernelService.Kernel))
                 {
                     if (content.Content != null)
                     {
                         sb.Append(content.Content);
                         aiFullResponse = sb.ToString();
-                        // Throttle edits
+
+                        //Throttle edits
                         if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1100)
                         {
                             lastEdit = DateTime.UtcNow;

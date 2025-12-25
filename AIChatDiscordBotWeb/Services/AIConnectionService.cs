@@ -10,7 +10,7 @@ namespace AIChatDiscordBotWeb.Services
     /// It handles the setup and configuration of the Semantic Kernel,
     /// The connection to the Ollama local LLM server, and the registration of various tools
     ///</summary>>
-    public class SemanticKernelService
+    public class AIConnectionService
     {
         private readonly Kernel _kernel;
         private readonly string _model;
@@ -19,19 +19,37 @@ namespace AIChatDiscordBotWeb.Services
         public IKernelMemory Memory => _memoryService.RawMemory;
 
         // Accept KernelMemoryService as a dependency instead of building memory here
-        public SemanticKernelService(EnvConfig config, KernelMemoryService memoryService)
+        public AIConnectionService(EnvConfig config, KernelMemoryService memoryService)
         {
             _model = config.MODEL;
             //string ollamaUrl = $"http://localhost:{config.LOCAL_HOST}"; //old one that i used only to enter the numbers to connect server
-            string ollamaUrl = $"{config.LOCAL_HOST}";
+            string ollamaUrl = config.LOCAL_HOST;
             _memoryService = memoryService;
 
-            // Initialize Chat Kernel Memory
+            // Configure HttpClient for long timeouts (if needed)
+            var httpClient = new HttpClient
+            {
+                Timeout = TimeSpan.FromMinutes(5) // Adjust: 3-10 mins for large models
+            };
+
             var builder = Kernel.CreateBuilder();
-            builder.AddOllamaChatCompletion(
+
+            // To OpenAI connector with Ollama's OpenAI-compatible endpoint.
+            // This works with Ollama same PC or remote server in the same network.
+            // Also will probably work with ChatGPT, Gemini and other OpenAI-compatible endpoints.
+            builder.AddOpenAIChatCompletion(
                 modelId: _model,
-                endpoint: new Uri(ollamaUrl)
+                apiKey: config.API_KEY, // Required but ignored by Ollama
+                endpoint: new Uri(ollamaUrl),
+                httpClient: httpClient
             );
+            //// Old Ollama connector but it still works [25.12.2025/dd.mm.yyyy]
+            //// Initialize Chat Kernel Memory
+            //var builder = Kernel.CreateBuilder();
+            //builder.AddOllamaChatCompletion(
+            //    modelId: _model,
+            //    endpoint: new Uri(ollamaUrl)
+            //);
 
             // Register Tools
             builder.Plugins.AddFromType<TimeTool>();

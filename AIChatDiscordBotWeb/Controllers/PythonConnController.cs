@@ -23,13 +23,13 @@ namespace AIChatDiscordBotWeb.Controllers
     [Route("api")]
     public class PythonConnectionController : ControllerBase
     {
-        private readonly SemanticKernelService _skService;
+        private readonly AIConnectionService _skService;
         private readonly ChatMemoryService _memoryService;
         private readonly EnvConfig _config; // For system message
 
         // Use the system message from your config, just like the AIChat class
 
-        public PythonConnectionController(SemanticKernelService skService, ChatMemoryService memoryService, EnvConfig config)
+        public PythonConnectionController(AIConnectionService skService, ChatMemoryService memoryService, EnvConfig config)
         {
             _skService = skService;
             _memoryService = memoryService;
