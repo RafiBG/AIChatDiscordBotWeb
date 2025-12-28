@@ -41,7 +41,7 @@ Built with **C# ASP.NET Core Web App (MVC)** on **.NET 9.0**.
     ![privilage](https://github.com/user-attachments/assets/f6a7ae67-acf6-4d11-a479-7b55df3fab02)
 4.  **Installation:** Ensure the bot has the following permissions enabled:
     ![bot](https://github.com/user-attachments/assets/61b00634-6aee-474f-99e3-549f142380e4)
-5.  Copy your **Bot Token**. You will need this for the coinfig.
+5.  Copy your **Bot Token**. You will need this for the config.
 
 ### 2. Ollama Setup (The Brain)
 1.  Download and install [Ollama](https://ollama.com/).
@@ -86,7 +86,7 @@ To enable image generation:
 
 ---
 
-### 5. 🗣️ Speaking Discord Bot (Optional)
+### 5. Speaking Discord Bot (Optional)
 To enable voice capabilities (Voice-to-Text and Text-to-Speech), you must run the secondary Python bot alongside this one.
 
 * **Repository:** [RafiBG/AITalkingDiscordBot](https://github.com/RafiBG/AITalkingDiscordBot)
