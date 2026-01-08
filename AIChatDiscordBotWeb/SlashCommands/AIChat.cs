@@ -6,6 +6,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
 using System.Collections.Concurrent;
 using System.Text;
@@ -16,7 +17,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 {
     public class AIChat : ApplicationCommandModule
     {
-        private readonly SemanticKernelService _kernelService;
+        private readonly AIConnectionService _kernelService;
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels = new();
         private readonly ChatMemoryService _chatMemory;
@@ -27,11 +28,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private string givenFile;
         private string givenImage;
         private string webLinks;
-        //private string generatedImage;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
-        public AIChat(SemanticKernelService kernelService, EnvConfig config, ChatMemoryService chatMemory)
+        public AIChat(AIConnectionService kernelService, EnvConfig config, ChatMemoryService chatMemory)
         {
             _kernelService = kernelService;
             _systemMessage = config.SYSTEM_MESSAGE;
@@ -45,7 +45,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             [Option("message", "Your message")] string message,
             [Option("file", "Optional file to read like pdf,txt,docx")] DiscordAttachment file = null,
             [Option("image", "Optional image to see")] DiscordAttachment image = null)
-        {   // Checks if user ask in allowed channel if there is one
+        {
+            if (ctx.User.IsBot) return; // Ignore bot messages
+
+            // Checks if user ask in allowed channel if there is one
             if (_allowedChannels.Count > 0 && !_allowedChannels.Contains(ctx.Channel.Id))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
@@ -134,7 +137,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     //Console.WriteLine($"User file URL given to AI: {file.Url}");
                 }
 
-                var userMessageContent = new ChatMessageContent();
+                var userMessageContent = new ChatMessageContent
+                {
+                    Role = AuthorRole.User
+                };
                 // Add the user message 
                 userMessageContent.Items.Add(new TextContent(finalMessage));
 
@@ -164,8 +170,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
                 };
 
-                string aiFullResponse = "";
-
                 var embedEmpty = new DiscordEmbedBuilder
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
@@ -178,35 +182,44 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     Color = DiscordColor.CornflowerBlue,
                 };
                 var sendMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embedEmpty));
-                var sb = new StringBuilder();
+                
+                StringBuilder sb = new StringBuilder();
+                string aiFullResponse = "";
                 var lastEdit = DateTime.UtcNow;
+                bool stopStreamingUpdates = false;
 
-
-                await foreach (var content in chatService.GetStreamingChatMessageContentsAsync(history, ollamaSettings,_kernelService.Kernel))
+                await foreach (var streamMsg in chatService.GetStreamingChatMessageContentsAsync(
+                history, ollamaSettings, _kernelService.Kernel))
                 {
-                    if (content.Content != null)
+                    // Skip tool calls and tool execution messages
+                    if (streamMsg.Role == AuthorRole.Tool)
+                        continue;
+
+                    // Streaming text arrives here
+                    if (!string.IsNullOrEmpty(streamMsg.Content))
                     {
-                        sb.Append(content.Content);
+                        sb.Append(streamMsg.Content);
                         aiFullResponse = sb.ToString();
-                        // Throttle edits
-                        if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1100)
+                    }
+
+                    // Throttle Discord edits
+                    if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1100)
+                    {
+                        lastEdit = DateTime.UtcNow;
+
+                        var embedUpdate = new DiscordEmbedBuilder
                         {
-                            lastEdit = DateTime.UtcNow;
-
-                            var embedUpdate = new DiscordEmbedBuilder
+                            Author = new DiscordEmbedBuilder.EmbedAuthor
                             {
-                                Author = new DiscordEmbedBuilder.EmbedAuthor
-                                {
-                                    Name = Truncate(message, 247),
-                                    IconUrl = ctx.User.AvatarUrl
-                                },
-                                Title = $"Model: {_kernelService.Model}\n {givenFile}\n\nResponse",
-                                Description = aiFullResponse,
-                                Color = DiscordColor.CornflowerBlue
-                            };
+                                Name = Truncate(message, 247), // this is the user string
+                                IconUrl = ctx.User.AvatarUrl
+                            },
+                            Title = $"Model: {_kernelService.Model}\n {givenFile}\n [Thinking...]\n\nResponse",
+                            Description = aiFullResponse,
+                            Color = DiscordColor.CornflowerBlue
+                        };
 
-                            await sendMessage.ModifyAsync(embed: embedUpdate.Build());
-                        }
+                        await sendMessage.ModifyAsync(embed: embedUpdate.Build());
                     }
                 }
 
@@ -353,27 +366,53 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         public async Task HelpAsync(InteractionContext ctx)
         {
             await ctx.DeferAsync();
+            string botName = ctx.Client.CurrentUser.Username;
 
             var embed = new DiscordEmbedBuilder
             {
                 Title = "AI Bot Commands",
                 Description =
-                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, create code, get summaries, translate text, or let the bot remember things.\n\n" +
+                "**Slash Features**\n\n" +
+                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, create code, get summaries, translate text, or let the bot remember things.\n" +
                 "**/ask_multi** - Ask three different AIs same question and get summarie of all the answers.\n" +
                 "**/forgetme** - Clear your personal conversation memory only.\n" +
                 "**/reset** - Reset all conversations and bot context.\n" +
-                "**/help** - Show this help message." +
-                "**Voice Features**\n" +
+                "**/help** - Show this help message.\n\n" +
+                "**Voice Features**\n\n" +
                 "This bot can talk in voice channels using a second helper bot. Use the commands below when the helper bot is added.\n" +
                 "**/join** - The talking bot joins your current voice channel and can talk with you.\n" +
-                "**/leave** - The talking bot leaves the voice channel.\n\n",
+                "**/leave** - The talking bot leaves the voice channel.\n\n" +
+                "**Group Chat Features**\n\n" +
+                $"The AI can be forced to answer when mentioned with tag @{botName} and the question, reply his answer or just chat and the AI will decide if he needs to join the chat.\n" +
+                "All the features from **/ask** can be used in the group chats with the AI \n" +
+                "**(forget)** - Use this word in group ai chats to make the bot forget the current conversation.\n\n",
                 Color = DiscordColor.White
             };
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
         }
 
-        private string ExtractPdfText(byte[] pdfBytes)
+        [SlashCommand("about", "About the AI bot")]
+        public async Task AboutAsync(InteractionContext ctx)
+        {
+            await ctx.DeferAsync();
+            string botName = ctx.Client.CurrentUser.Username;
+
+            var embed = new DiscordEmbedBuilder
+            {
+                Title = $"About {botName}",
+                Description =
+                $"{botName} is a local AI powered Discord bot built with ASP.NET Core. " +
+                "It supports chat, file analysis, image generation, and multiple AI models.\n\n" +
+                "Author: Blue Diamond (Rafi)\n" +
+                "Project: https://github.com/RafiBG/AIChatDiscordBotWeb",
+                Color = DiscordColor.Purple
+            };
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
+        }
+
+        public static string ExtractPdfText(byte[] pdfBytes)
         {
             using var ms = new MemoryStream(pdfBytes);
             using var pdf = PdfDocument.Open(ms);
@@ -385,7 +424,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             return sb.ToString();
         }
 
-        private string ExtractDocxText(byte[] docxBytes)
+        public static string ExtractDocxText(byte[] docxBytes)
         {
             using var ms = new MemoryStream(docxBytes);
             using var wordDoc = WordprocessingDocument.Open(ms, false);

@@ -17,19 +17,19 @@ namespace AIChatDiscordBotWeb.Controllers
         public string transcription { get; set; }
     }
 
-    // This controller implements the CSHARP_AI_ENDPOINT from your Python code: 
+    // This controller implements the CSHARP_AI_ENDPOINT to Python code: 
     // "http://localhost:5000/api/process_transcription"
     [ApiController]
     [Route("api")]
     public class PythonConnectionController : ControllerBase
     {
-        private readonly SemanticKernelService _skService;
+        private readonly AIConnectionService _skService;
         private readonly ChatMemoryService _memoryService;
         private readonly EnvConfig _config; // For system message
 
         // Use the system message from your config, just like the AIChat class
 
-        public PythonConnectionController(SemanticKernelService skService, ChatMemoryService memoryService, EnvConfig config)
+        public PythonConnectionController(AIConnectionService skService, ChatMemoryService memoryService, EnvConfig config)
         {
             _skService = skService;
             _memoryService = memoryService;
@@ -44,7 +44,10 @@ namespace AIChatDiscordBotWeb.Controllers
                 return BadRequest(new { aiResponse = "Error: Invalid User ID format." });
             }
 
-            var userMessageContent = new ChatMessageContent();
+            var userMessageContent = new ChatMessageContent
+            {
+                Role = AuthorRole.User
+            };
             userMessageContent.Items.Add(new TextContent(payload.transcription));
 
             _memoryService.AddMessage(discordUserId, userMessageContent);

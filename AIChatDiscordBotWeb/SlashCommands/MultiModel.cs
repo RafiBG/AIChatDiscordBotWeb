@@ -5,17 +5,16 @@ using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using OllamaSharp.Models.Chat;
 using System.Text;
 
 namespace AIChatDiscordBotWeb.SlashCommands
 {
     public class MultiModel : ApplicationCommandModule
     {
-        private readonly SemanticKernelService _semanticKernel;
+        private readonly AIConnectionService _semanticKernel;
         private readonly EnvConfig _config;
 
-        public MultiModel(SemanticKernelService semanticKernel, EnvConfig config)
+        public MultiModel(AIConnectionService semanticKernel, EnvConfig config)
         {
             _semanticKernel = semanticKernel;
             _config = config;
