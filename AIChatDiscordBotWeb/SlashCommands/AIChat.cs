@@ -373,7 +373,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 Title = "AI Bot Commands",
                 Description =
                 "**Slash Features**\n\n" +
-                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, create code, get summaries, translate text, or let the bot remember things.\n" +
+                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, generate music, create code, get summaries, translate text, or let the bot remember things.\n" +
                 "**/ask_multi** - Ask three different AIs same question and get summarie of all the answers.\n" +
                 "**/forgetme** - Clear your personal conversation memory only.\n" +
                 "**/reset** - Reset all conversations and bot context.\n" +

@@ -224,7 +224,11 @@ namespace AIChatDiscordBotWeb.SlashCommands
                 groupSystemMessage += "\n[You are in a group chat and other people can join in the talk. This is context dont response to that.]";
                 var history = _chatMemory.GetUserMessages(messageEvent.Channel.Id, groupSystemMessage);
                 var chatService = _kernelService.ChatService;
-                var ollamaSettings = new OllamaPromptExecutionSettings { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() };
+
+                var ollamaSettings = new OllamaPromptExecutionSettings 
+                { 
+                    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() // AI can choose to use tools
+                };
 
                 StringBuilder sb = new StringBuilder();
                 string aiFullResponse = "";
@@ -272,6 +276,9 @@ namespace AIChatDiscordBotWeb.SlashCommands
 
                 // If image is generated via ComfyUI, attach it
                 AttachComfyUIImageAsync(botReply, aiCleanedResponse);
+
+                // if music is generated via MusicGenTool, attach it
+                AttachGeneratedMusicAsync(botReply, aiCleanedResponse);
 
                 _chatMemory.AddAssistantMessage(messageEvent.Channel.Id, aiFullResponse);
 
@@ -444,6 +451,72 @@ namespace AIChatDiscordBotWeb.SlashCommands
             }
 
             return sb.ToString().Trim();
+        }
+
+        private async Task AttachGeneratedMusicAsync(DiscordMessage botMessage, string aiResponse)
+        {
+            // You'll need a boolean in your MusicTool similar to ComfyUITool.IsImageGenerating
+            // Replace 'MusicTool' with the actual name of your music generation class
+            if (!MusicGenTool.IsMusicGenerating) return;
+
+            MusicGenTool.IsMusicGenerating = false;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Ensure you have MUSIC_OUTPUT_PATH in your EnvConfig
+                    //string outputFolder = _config.MUSIC_OUTPUT_PATH;
+                    string outputFolder = "C:\\Users\\Rafi\\Desktop\\MusicGenWorker\\outputs";
+                    Console.WriteLine($"[Music Gen] Watching for new audio in: {outputFolder}");
+
+                    string lastKnown = Directory.GetFiles(outputFolder, "*.wav")
+                        .OrderByDescending(f => File.GetCreationTimeUtc(f))
+                        .FirstOrDefault();
+
+                    DateTime start = DateTime.UtcNow;
+                    string latestMusic = null;
+                    int maxTimeWait = 300; // Music often takes longer than images
+
+                    while ((DateTime.UtcNow - start).TotalSeconds < maxTimeWait)
+                    {
+                        var files = Directory.GetFiles(outputFolder, "*.wav", SearchOption.TopDirectoryOnly);
+                        if (files.Length > 0)
+                        {
+                            var newest = files.OrderByDescending(f => File.GetCreationTimeUtc(f)).FirstOrDefault();
+
+                            // Check if it's a new file and exists
+                            if (newest != lastKnown && File.Exists(newest))
+                            {
+                                // Small delay to ensure the file is fully written/unlocked by the generator
+                                await Task.Delay(2000);
+                                latestMusic = newest;
+                                break;
+                            }
+                        }
+                        await Task.Delay(4000);
+                    }
+
+                    if (string.IsNullOrEmpty(latestMusic))
+                    {
+                        Console.WriteLine($"[Music Gen] No new music found after {maxTimeWait}s.");
+                        return;
+                    }
+
+                    string fileName = Path.GetFileName(latestMusic);
+
+                    using (var fs = new FileStream(latestMusic, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        await botMessage.ModifyAsync(new DiscordMessageBuilder()
+                            .WithContent(aiResponse)
+                            .AddFile(fileName, fs));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Music Gen] Error attaching music: {ex.Message}");
+                }
+            });
         }
     }
 }

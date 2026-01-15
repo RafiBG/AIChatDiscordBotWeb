@@ -62,6 +62,7 @@ namespace AIChatDiscordBotWeb.Services
                     case "MULTI_MODEL_2": config.MULTI_MODEL_2 = value; break;
                     case "MULTI_MODEL_3": config.MULTI_MODEL_3 = value; break;
                     case "EMBEDDIN_MODEL": config.EMBEDDIN_MODEL = value; break;
+                    case "MUSIC_GENERATION_API": config.MUSIC_GENERATION_API = value; break;
                 }
             }
             return config;
@@ -84,7 +85,8 @@ namespace AIChatDiscordBotWeb.Services
                 $"MULTI_MODEL_1={config.MULTI_MODEL_1}",
                 $"MULTI_MODEL_2={config.MULTI_MODEL_2}",
                 $"MULTI_MODEL_3={config.MULTI_MODEL_3}",
-                $"EMBEDDIN_MODEL={config.EMBEDDIN_MODEL}"
+                $"EMBEDDIN_MODEL={config.EMBEDDIN_MODEL}",
+                $"MUSIC_GENERATION_API={config.MUSIC_GENERATION_API}"
             };
 
             await File.WriteAllLinesAsync(_filePath, lines);

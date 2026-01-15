@@ -16,7 +16,10 @@ builder.Services.AddSingleton<EnvConfig>(sp =>
     return envService.LoadAsync().Result;
 });
 
-// Register SemanticService Ollama (depends on EnvConfig)
+// Register SemanticService Ollama (OLD Ollama connection)
+//builder.Services.AddSingleton<SemanticKernelService>();
+
+// Register AIConnectionService (new OpenAI-compatible Ollama,LM Studio and other connection)
 builder.Services.AddSingleton<AIConnectionService>();
 
 builder.Services.AddSingleton<ChatMemoryService>();

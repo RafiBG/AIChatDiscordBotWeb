@@ -16,5 +16,6 @@
         public string MULTI_MODEL_2 { get; set; }
         public string MULTI_MODEL_3 { get; set; }
         public string EMBEDDIN_MODEL { get; set; }
+        public string MUSIC_GENERATION_API { get; set; }
     }
 }

@@ -56,6 +56,7 @@ namespace AIChatDiscordBotWeb.Services
             builder.Plugins.AddFromObject(new SerperSearchTool(config.SERPER_API_KEY), "SerperSearchTool");
             builder.Plugins.AddFromObject(new ComfyUITool(config.COMFYUI_API), "ComfyUITool");
             builder.Plugins.AddFromObject(new VectorMemoryTool(_memoryService), "LongTermMemory");
+            builder.Plugins.AddFromObject(new MusicGenTool(config.MUSIC_GENERATION_API), "MusicGenTool");
 
             _kernel = builder.Build();
         }
