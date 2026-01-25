@@ -12,10 +12,15 @@
         public string SERPER_API_KEY { get; set; }
         public string COMFYUI_API {  get; set; }
         public string COMFYUI_IMAGE_PATH { get; set; }
+        public int COMFYUI_IMAGE_WIDTH { get; set; }
+        public int COMFYUI_IMAGE_HEIGHT { get; set; }
+        public byte COMFYUI_STEPS { get; set; }
+        public string TALK_SYSTEM_MESSAGE { get; set; }
         public string MULTI_MODEL_1 { get; set; }
         public string MULTI_MODEL_2 { get; set; }
         public string MULTI_MODEL_3 { get; set; }
         public string EMBEDDIN_MODEL { get; set; }
-        public string MUSIC_GENERATION_API { get; set; }
+        public string MUSIC_GENERATION_PATH { get; set; }
+        public string PYTHON_EXECUTION_API { get; set; }
     }
 }

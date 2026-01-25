@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
-using System.IO;
 
 namespace AIChatDiscordBotWeb.Controllers
 {
@@ -21,12 +19,12 @@ namespace AIChatDiscordBotWeb.Controllers
             string jobId = Guid.NewGuid().ToString("N")[..8];
             string expectedFile = Path.Combine(_outputFolder, $"{jobId}.wav");
 
-            // 1. Tell Python to start
+            // Tell Python to start
             bool sent = await SendToPythonAsync(jobId, payload.Prompt, payload.Duration);
             if (!sent)
                 return StatusCode(500, new MusicGenResult { Status = "Python Offline", JobId = jobId });
 
-            // 2. Poll for the file (Waiting for Python to finish writing)
+            // Poll for the file (Waiting for Python to finish writing)
             int maxAttempts = 30;
             for (int i = 0; i < maxAttempts; i++)
             {

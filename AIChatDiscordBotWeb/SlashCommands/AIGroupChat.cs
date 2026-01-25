@@ -225,8 +225,8 @@ namespace AIChatDiscordBotWeb.SlashCommands
                 var history = _chatMemory.GetUserMessages(messageEvent.Channel.Id, groupSystemMessage);
                 var chatService = _kernelService.ChatService;
 
-                var ollamaSettings = new OllamaPromptExecutionSettings 
-                { 
+                var ollamaSettings = new OllamaPromptExecutionSettings
+                {
                     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() // AI can choose to use tools
                 };
 
@@ -455,8 +455,6 @@ namespace AIChatDiscordBotWeb.SlashCommands
 
         private async Task AttachGeneratedMusicAsync(DiscordMessage botMessage, string aiResponse)
         {
-            // You'll need a boolean in your MusicTool similar to ComfyUITool.IsImageGenerating
-            // Replace 'MusicTool' with the actual name of your music generation class
             if (!MusicGenTool.IsMusicGenerating) return;
 
             MusicGenTool.IsMusicGenerating = false;
@@ -467,7 +465,7 @@ namespace AIChatDiscordBotWeb.SlashCommands
                 {
                     // Ensure you have MUSIC_OUTPUT_PATH in your EnvConfig
                     //string outputFolder = _config.MUSIC_OUTPUT_PATH;
-                    string outputFolder = "C:\\Users\\Rafi\\Desktop\\MusicGenWorker\\outputs";
+                    string outputFolder = _config.MUSIC_GENERATION_PATH;
                     Console.WriteLine($"[Music Gen] Watching for new audio in: {outputFolder}");
 
                     string lastKnown = Directory.GetFiles(outputFolder, "*.wav")

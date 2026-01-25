@@ -182,7 +182,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     Color = DiscordColor.CornflowerBlue,
                 };
                 var sendMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embedEmpty));
-                
+
                 StringBuilder sb = new StringBuilder();
                 string aiFullResponse = "";
                 var lastEdit = DateTime.UtcNow;
@@ -255,7 +255,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
                     {
-                        Name = Truncate(message,247),
+                        Name = Truncate(message, 247),
                         IconUrl = ctx.User.AvatarUrl
                     },
                     Title = $"Model: {_kernelService.Model}\n{givenFile}\n {VectorMemoryTool.memorySavedOrPulled}\n\nResponse",
@@ -265,6 +265,8 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 };
 
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
+
+                AttachGeneratedMusicAsync(sendMessage, message, aiCleanedResponse, webLinks, ctx);
 
                 if (ComfyUITool.IsImageGenerating)
                 {
@@ -362,56 +364,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 .AsEphemeral());
         }
 
-        [SlashCommand("help", "Show all commands")]
-        public async Task HelpAsync(InteractionContext ctx)
-        {
-            await ctx.DeferAsync();
-            string botName = ctx.Client.CurrentUser.Username;
-
-            var embed = new DiscordEmbedBuilder
-            {
-                Title = "AI Bot Commands",
-                Description =
-                "**Slash Features**\n\n" +
-                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, generate music, create code, get summaries, translate text, or let the bot remember things.\n" +
-                "**/ask_multi** - Ask three different AIs same question and get summarie of all the answers.\n" +
-                "**/forgetme** - Clear your personal conversation memory only.\n" +
-                "**/reset** - Reset all conversations and bot context.\n" +
-                "**/help** - Show this help message.\n\n" +
-                "**Voice Features**\n\n" +
-                "This bot can talk in voice channels using a second helper bot. Use the commands below when the helper bot is added.\n" +
-                "**/join** - The talking bot joins your current voice channel and can talk with you.\n" +
-                "**/leave** - The talking bot leaves the voice channel.\n\n" +
-                "**Group Chat Features**\n\n" +
-                $"The AI can be forced to answer when mentioned with tag @{botName} and the question, reply his answer or just chat and the AI will decide if he needs to join the chat.\n" +
-                "All the features from **/ask** can be used in the group chats with the AI \n" +
-                "**(forget)** - Use this word in group ai chats to make the bot forget the current conversation.\n\n",
-                Color = DiscordColor.White
-            };
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
-        }
-
-        [SlashCommand("about", "About the AI bot")]
-        public async Task AboutAsync(InteractionContext ctx)
-        {
-            await ctx.DeferAsync();
-            string botName = ctx.Client.CurrentUser.Username;
-
-            var embed = new DiscordEmbedBuilder
-            {
-                Title = $"About {botName}",
-                Description =
-                $"{botName} is a local AI powered Discord bot built with ASP.NET Core. " +
-                "It supports chat, file analysis, image generation, and multiple AI models.\n\n" +
-                "Author: Blue Diamond (Rafi)\n" +
-                "Project: https://github.com/RafiBG/AIChatDiscordBotWeb",
-                Color = DiscordColor.Purple
-            };
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
-        }
-
         public static string ExtractPdfText(byte[] pdfBytes)
         {
             using var ms = new MemoryStream(pdfBytes);
@@ -430,7 +382,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             using var wordDoc = WordprocessingDocument.Open(ms, false);
             var sb = new StringBuilder();
             foreach (var text in wordDoc.MainDocumentPart.Document.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>())
-    {
+            {
                 sb.Append(text.Text);
             }
             return sb.ToString();
@@ -449,5 +401,75 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 return text.Substring(0, maxLength - 3) + "...";
             }
         }
+
+        private void AttachGeneratedMusicAsync(DiscordMessage sendMessage, string message, string aiCleanedResponse, string webLinks, InteractionContext ctx)
+        {
+            if (!MusicGenTool.IsMusicGenerating) return;
+
+            MusicGenTool.IsMusicGenerating = false;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    string outputFolder = @$"{_config.MUSIC_GENERATION_PATH}";
+                    Console.WriteLine($"[Music Gen] Watching for new audio in: {outputFolder}");
+
+                    // Remember the most recent file before generation starts
+                    string lastKnown = Directory.GetFiles(outputFolder, "*.wav")
+                        .OrderByDescending(f => File.GetCreationTimeUtc(f))
+                        .FirstOrDefault();
+
+                    DateTime start = DateTime.UtcNow;
+                    string latestMusic = null;
+                    int maxTimeWait = 300; // 5 minutes max wait
+
+                    while ((DateTime.UtcNow - start).TotalSeconds < maxTimeWait)
+                    {
+                        var files = Directory.GetFiles(outputFolder, "*.wav", SearchOption.TopDirectoryOnly);
+                        if (files.Length > 0)
+                        {
+                            var newest = files.OrderByDescending(f => File.GetCreationTimeUtc(f)).FirstOrDefault();
+                            if (newest != lastKnown && File.Exists(newest))
+                            {
+                                latestMusic = newest;
+                                break;
+                            }
+                        }
+                        await Task.Delay(3000); // check every 3 seconds
+                    }
+
+                    if (string.IsNullOrEmpty(latestMusic))
+                    {
+                        Console.WriteLine($"[Music Gen] No new music found after {maxTimeWait}s.");
+                        return;
+                    }
+
+                    string musicFile = Path.GetFileName(latestMusic);
+
+                    var embedWithMusic = new DiscordEmbedBuilder
+                    {
+                        Author = new DiscordEmbedBuilder.EmbedAuthor
+                        {
+                            Name = Truncate(message, 247),
+                            IconUrl = ctx.User.AvatarUrl
+                        },
+                        Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
+                        Description = $"{aiCleanedResponse}\n{webLinks}\n**Music attached:** {musicFile}",
+                        Color = DiscordColor.CornflowerBlue
+                    };
+
+                    // Edit the last message to include the music attachment
+                    await sendMessage.ModifyAsync(new DiscordMessageBuilder()
+                        .AddEmbed(embedWithMusic)
+                        .AddFile(musicFile, File.OpenRead(latestMusic)));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error while attaching generated music: {ex.Message}");
+                }
+            });
+        }
+
     }
 }

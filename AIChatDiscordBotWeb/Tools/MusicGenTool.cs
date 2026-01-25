@@ -1,7 +1,5 @@
 ﻿using Microsoft.SemanticKernel;
 using System.ComponentModel;
-using System.Text;
-using System.Text.Json;
 
 namespace AIChatDiscordBotWeb.Tools
 {
@@ -9,7 +7,7 @@ namespace AIChatDiscordBotWeb.Tools
     {
         private readonly string _musicApi;
 
-        public static bool IsMusicGenerating { get; set; } = false;
+        public static bool IsMusicGenerating = false;
 
         public MusicGenTool(string musicApi)
         {
@@ -23,6 +21,7 @@ namespace AIChatDiscordBotWeb.Tools
         [Description("Duration in seconds as an integer. If there is no number default number is 10")] int durationSeconds = 10)
         {
             Console.WriteLine($"[Tool] Music generation triggered for: {aiPrompt} ({durationSeconds}s)");
+            if (durationSeconds > 20) durationSeconds = 20;
             int duration = Convert.ToInt32(durationSeconds);
             // Tell Python to start generating
             using var http = new HttpClient();

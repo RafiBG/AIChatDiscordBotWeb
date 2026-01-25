@@ -23,6 +23,7 @@
         <p>Example: http://localhost:11434/v1 (this is default numbers for ollama if you didnt change to custom)</p>
         <p>http://localhost:11434/v1 and http://127.0.0.1:11434/v1 is the same. Any of them will work. Just change the numbers to your server ones.</p>
         <p>Example for other Ollama PC connection: http://192.168.50.111:11434/v1</p>
+        <p>Example for LM Studio connection: http://127.0.0.1:1234/v1</p>
         <p>Now you can connect to ChatGPT,Gemini or Ollama that is running on other PC in the same network. Check their website for the URL connection.</p>
     </div>
 
@@ -59,7 +60,7 @@
 
     <div class="mb-3">
         <label>System Message</label>
-        <textarea asp-for="SYSTEM_MESSAGE" class="form-control" style="height:100px;"></textarea>
+        <textarea asp-for="SYSTEM_MESSAGE" class="form-control" style="height:300px;"></textarea>
     </div>
 
     <div class="mb-3">
@@ -81,6 +82,37 @@
         <label>ComfyUI path to the generated images</label>
         <input asp-for="COMFYUI_IMAGE_PATH" class="form-control" />
         <p>Example: C:\Users\YourPCName\Documents\ComfyUI\output (this is default path for ComfyUI image generation folder if you didnt change to custom)</p>
+    </div>
+
+    <div class="mb-3">
+        <label>ComfyUI image width</label>
+        <input asp-for="COMFYUI_IMAGE_WIDTH" class="form-control" />
+        <p>Works with 512 and 1024. If you leave it empty by default will be 512. Bigger number uses more resources on the PC</p>
+    </div>
+
+    <div class="mb-3">
+        <label>ComfyUI image height</label>
+        <input asp-for="COMFYUI_IMAGE_HEIGHT" class="form-control" />
+        <p>Works with 512 and 1024. If you leave it empty by default will be 512. Bigger number uses more resources on the PC</p>
+    </div>
+
+    <div class="mb-3">
+        <label>ComfyUI image steps</label>
+        <input asp-for="COMFYUI_STEPS" class="form-control" />
+        <p>Works with 20 and more. If you leave it empty by default will be 20. Bigger number uses more resources on the PC</p>
+    </div>
+
+    <div class="mb-3">
+        <h4>Talking in voice channel config</h4>
+        <label>Talking System Message</label>
+        <textarea asp-for="TALK_SYSTEM_MESSAGE" class="form-control" style="height:100px;"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <h4>Music generation config</h4>
+        <label>ComfyUI path to the generated images</label>
+        <input asp-for="MUSIC_GENERATION_PATH" class="form-control" />
+        <p>Example: C:\Users\YourPCName\Desktop\MusicGenWorker\outputs</p>
     </div>
 
     <div class="mb-3">

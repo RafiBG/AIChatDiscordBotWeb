@@ -51,12 +51,16 @@ namespace AIChatDiscordBotWeb.Services
             //    endpoint: new Uri(ollamaUrl)
             //);
 
+            // Debug
+            Console.WriteLine($"\nHeight: {config.COMFYUI_IMAGE_HEIGHT}, Widht: {config.COMFYUI_IMAGE_WIDTH}, Steps: {config.COMFYUI_STEPS}\n");
+
             // Register Tools
             builder.Plugins.AddFromType<TimeTool>();
             builder.Plugins.AddFromObject(new SerperSearchTool(config.SERPER_API_KEY), "SerperSearchTool");
-            builder.Plugins.AddFromObject(new ComfyUITool(config.COMFYUI_API), "ComfyUITool");
+            builder.Plugins.AddFromObject(new ComfyUITool(config.COMFYUI_API, config.COMFYUI_IMAGE_WIDTH, config.COMFYUI_IMAGE_HEIGHT, config.COMFYUI_STEPS), "ComfyUITool");
             builder.Plugins.AddFromObject(new VectorMemoryTool(_memoryService), "LongTermMemory");
-            builder.Plugins.AddFromObject(new MusicGenTool(config.MUSIC_GENERATION_API), "MusicGenTool");
+            builder.Plugins.AddFromObject(new MusicGenTool(config.MUSIC_GENERATION_PATH), "MusicGenTool");
+            builder.Plugins.AddFromObject(new PythonExecutionTool(config.PYTHON_EXECUTION_API), "PythonExecutionTool");
 
             _kernel = builder.Build();
         }
