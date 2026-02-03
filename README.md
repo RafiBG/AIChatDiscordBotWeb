@@ -7,12 +7,14 @@
 ## ✨ Features
 **What can this local AI do in Discord?**
 
-* **💬 Chat:** Natural conversation with context awareness.
-* **📄 File Analysis:** Upload **PDF, TXT, or DOCX** files, and the bot will read and answer questions based on them.
-* **👁️ Vision:** Upload images and ask the bot to describe or analyze them (requires a Vision model).
-* **🌐 Web Search:** The bot can search the internet for the latest news and real-time information (requires Serper web api key).
-* **🎨 Image Generation:** The bot can generate images locally using **ComfyUI** (requires installed ComfyUI).
-* **🗣️ Speaking:** The bot can speak in voice channels (requires installed second Discord bot).
+* 💬 **Chat:** Natural conversation with context awareness.
+* 📄 **File Analysis:** Upload **PDF, TXT, or DOCX** files, and the bot will read and answer questions based on them.
+* 👁️ **Vision:** Upload images and ask the bot to describe or analyze them (requires a Vision model).
+* 🌐 **Web Search:** The bot can search the internet for the latest news and real-time information (requires Serper web api key).
+* 🎨 **Image Generation:** The bot can generate images locally using **ComfyUI** (requires installed ComfyUI).
+* 🗣️ **Speaking:** The bot can speak in voice channels (requires installed second Discord bot).
+* 🎵 **Music Generation:** Create original audio and music (requires separate Music Gen Python program running).
+* 🐍 **Python Execution:** Write and execute Python code snippets (requires separate Python Execution environment/program running).
 
 ---
 
@@ -88,10 +90,21 @@ To enable image generation:
 
 ### 5. Speaking Discord Bot (Optional)
 To enable voice capabilities (Voice-to-Text and Text-to-Speech), you must run the secondary Python bot alongside this one.
-
 * **Repository:** [RafiBG/AITalkingDiscordBot](https://github.com/RafiBG/AITalkingDiscordBot)
 * **Role:** Handles microphone input and generates voice audio using Whisper STT and Piper TTS.
 * **Setup:** Follow the detailed instructions in the link above to install FFmpeg and Piper TTS.
+
+### 6. Music Generation (Optional)
+To enable local music and melody generation within Discord.
+* **Repository:** [RafiBG/AIMusicGenerator](https://github.com/RafiBG/AIMusicGenerator)
+* **Role:** Processes music generation requests and returns audio files to the main bot.
+* **Setup:** Follow the detailed instructions in the link above.
+
+### 7. Python Execution (Optional)
+To enable the bot to write and run actual Python scripts.
+* **Repository:** [RafiBG/AIPythonRun](https://github.com/RafiBG/AIPythonRun)
+* **Role:** Acts as a sandbox/runner to execute code safely and return the result to the Discord AI bot.
+* **Setup:** Follow the detailed instructions in the link above.
   
 ---
 
@@ -123,11 +136,12 @@ To enable voice capabilities (Voice-to-Text and Text-to-Speech), you must run th
    <img src="https://github.com/user-attachments/assets/47e3cae9-1c34-47b5-b49a-0dc1ee158869" width="30%" />
 </p>
 
-**Image Generation**
+**Image Generation & Music Generation**
 <p float="left">
   <img src="https://github.com/user-attachments/assets/21588bf2-a3dc-47a1-9829-df216a7cfb22" width="30%" />
   <img src="https://github.com/user-attachments/assets/d5ae4524-9397-4763-8d29-c5574a619cae" width="30%" />
   <img src="https://github.com/user-attachments/assets/e891f861-577d-42c7-9e92-0c5e2c399bee" width="30%" />
+  <img src="https://github.com/user-attachments/assets/f453b969-6e00-4703-9f78-2fe596f888f0" width="30%" />
 </p>
 
 **Long term memory**
@@ -135,3 +149,9 @@ To enable voice capabilities (Voice-to-Text and Text-to-Speech), you must run th
  <img src="https://github.com/user-attachments/assets/51bc1f34-47a3-4cd3-8d48-1de4baef715b" width="30%" />
  <img src="https://github.com/user-attachments/assets/b7a270f2-9411-4e88-9ddf-5c856e3c867b" width="30%" />
 </p>
+
+**Python execution**
+<p float="left">
+ <img src="https://github.com/user-attachments/assets/7149dd7c-6eab-497a-b5be-f88073c951f3" width="30%" />
+</p>
+
