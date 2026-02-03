@@ -6,6 +6,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
 using System.Collections.Concurrent;
 using System.Text;
@@ -16,7 +17,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
 {
     public class AIChat : ApplicationCommandModule
     {
-        private readonly SemanticKernelService _kernelService;
+        private readonly AIConnectionService _kernelService;
         private readonly string _systemMessage;
         private readonly List<ulong> _allowedChannels = new();
         private readonly ChatMemoryService _chatMemory;
@@ -27,11 +28,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
         private string givenFile;
         private string givenImage;
         private string webLinks;
-        //private string generatedImage;
 
         //private static readonly TimeSpan ModelTimeout = TimeSpan.FromSeconds(60);
 
-        public AIChat(SemanticKernelService kernelService, EnvConfig config, ChatMemoryService chatMemory)
+        public AIChat(AIConnectionService kernelService, EnvConfig config, ChatMemoryService chatMemory)
         {
             _kernelService = kernelService;
             _systemMessage = config.SYSTEM_MESSAGE;
@@ -45,7 +45,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             [Option("message", "Your message")] string message,
             [Option("file", "Optional file to read like pdf,txt,docx")] DiscordAttachment file = null,
             [Option("image", "Optional image to see")] DiscordAttachment image = null)
-        {   // Checks if user ask in allowed channel if there is one
+        {
+            if (ctx.User.IsBot) return; // Ignore bot messages
+
+            // Checks if user ask in allowed channel if there is one
             if (_allowedChannels.Count > 0 && !_allowedChannels.Contains(ctx.Channel.Id))
             {
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
@@ -134,7 +137,10 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     //Console.WriteLine($"User file URL given to AI: {file.Url}");
                 }
 
-                var userMessageContent = new ChatMessageContent();
+                var userMessageContent = new ChatMessageContent
+                {
+                    Role = AuthorRole.User
+                };
                 // Add the user message 
                 userMessageContent.Items.Add(new TextContent(finalMessage));
 
@@ -164,8 +170,6 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
                 };
 
-                string aiFullResponse = "";
-
                 var embedEmpty = new DiscordEmbedBuilder
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
@@ -178,35 +182,44 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                     Color = DiscordColor.CornflowerBlue,
                 };
                 var sendMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embedEmpty));
-                var sb = new StringBuilder();
+
+                StringBuilder sb = new StringBuilder();
+                string aiFullResponse = "";
                 var lastEdit = DateTime.UtcNow;
+                bool stopStreamingUpdates = false;
 
-
-                await foreach (var content in chatService.GetStreamingChatMessageContentsAsync(history, ollamaSettings,_kernelService.Kernel))
+                await foreach (var streamMsg in chatService.GetStreamingChatMessageContentsAsync(
+                history, ollamaSettings, _kernelService.Kernel))
                 {
-                    if (content.Content != null)
+                    // Skip tool calls and tool execution messages
+                    if (streamMsg.Role == AuthorRole.Tool)
+                        continue;
+
+                    // Streaming text arrives here
+                    if (!string.IsNullOrEmpty(streamMsg.Content))
                     {
-                        sb.Append(content.Content);
+                        sb.Append(streamMsg.Content);
                         aiFullResponse = sb.ToString();
-                        // Throttle edits
-                        if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1100)
+                    }
+
+                    // Throttle Discord edits
+                    if ((DateTime.UtcNow - lastEdit).TotalMilliseconds >= 1100)
+                    {
+                        lastEdit = DateTime.UtcNow;
+
+                        var embedUpdate = new DiscordEmbedBuilder
                         {
-                            lastEdit = DateTime.UtcNow;
-
-                            var embedUpdate = new DiscordEmbedBuilder
+                            Author = new DiscordEmbedBuilder.EmbedAuthor
                             {
-                                Author = new DiscordEmbedBuilder.EmbedAuthor
-                                {
-                                    Name = Truncate(message, 247),
-                                    IconUrl = ctx.User.AvatarUrl
-                                },
-                                Title = $"Model: {_kernelService.Model}\n {givenFile}\n\nResponse",
-                                Description = aiFullResponse,
-                                Color = DiscordColor.CornflowerBlue
-                            };
+                                Name = Truncate(message, 247), // this is the user string
+                                IconUrl = ctx.User.AvatarUrl
+                            },
+                            Title = $"Model: {_kernelService.Model}\n {givenFile}\n [Thinking...]\n\nResponse",
+                            Description = aiFullResponse,
+                            Color = DiscordColor.CornflowerBlue
+                        };
 
-                            await sendMessage.ModifyAsync(embed: embedUpdate.Build());
-                        }
+                        await sendMessage.ModifyAsync(embed: embedUpdate.Build());
                     }
                 }
 
@@ -242,7 +255,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 {
                     Author = new DiscordEmbedBuilder.EmbedAuthor
                     {
-                        Name = Truncate(message,247),
+                        Name = Truncate(message, 247),
                         IconUrl = ctx.User.AvatarUrl
                     },
                     Title = $"Model: {_kernelService.Model}\n{givenFile}\n {VectorMemoryTool.memorySavedOrPulled}\n\nResponse",
@@ -252,6 +265,8 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 };
 
                 await sendMessage.ModifyAsync(embed: embedFinal.Build());
+
+                AttachGeneratedMusicAsync(sendMessage, message, aiCleanedResponse, webLinks, ctx);
 
                 if (ComfyUITool.IsImageGenerating)
                 {
@@ -349,31 +364,7 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 .AsEphemeral());
         }
 
-        [SlashCommand("help", "Show all commands")]
-        public async Task HelpAsync(InteractionContext ctx)
-        {
-            await ctx.DeferAsync();
-
-            var embed = new DiscordEmbedBuilder
-            {
-                Title = "AI Bot Commands",
-                Description =
-                "**/ask** - Main command for everything. Ask questions, analyze files, read documents, inspect images, generate images, create code, get summaries, translate text, or let the bot remember things.\n\n" +
-                "**/ask_multi** - Ask three different AIs same question and get summarie of all the answers.\n" +
-                "**/forgetme** - Clear your personal conversation memory only.\n" +
-                "**/reset** - Reset all conversations and bot context.\n" +
-                "**/help** - Show this help message." +
-                "**Voice Features**\n" +
-                "This bot can talk in voice channels using a second helper bot. Use the commands below when the helper bot is added.\n" +
-                "**/join** - The talking bot joins your current voice channel and can talk with you.\n" +
-                "**/leave** - The talking bot leaves the voice channel.\n\n",
-                Color = DiscordColor.White
-            };
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
-        }
-
-        private string ExtractPdfText(byte[] pdfBytes)
+        public static string ExtractPdfText(byte[] pdfBytes)
         {
             using var ms = new MemoryStream(pdfBytes);
             using var pdf = PdfDocument.Open(ms);
@@ -385,13 +376,13 @@ namespace AIChatDiscordBotWeb.SlashCommadns
             return sb.ToString();
         }
 
-        private string ExtractDocxText(byte[] docxBytes)
+        public static string ExtractDocxText(byte[] docxBytes)
         {
             using var ms = new MemoryStream(docxBytes);
             using var wordDoc = WordprocessingDocument.Open(ms, false);
             var sb = new StringBuilder();
             foreach (var text in wordDoc.MainDocumentPart.Document.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>())
-    {
+            {
                 sb.Append(text.Text);
             }
             return sb.ToString();
@@ -410,5 +401,75 @@ namespace AIChatDiscordBotWeb.SlashCommadns
                 return text.Substring(0, maxLength - 3) + "...";
             }
         }
+
+        private void AttachGeneratedMusicAsync(DiscordMessage sendMessage, string message, string aiCleanedResponse, string webLinks, InteractionContext ctx)
+        {
+            if (!MusicGenTool.IsMusicGenerating) return;
+
+            MusicGenTool.IsMusicGenerating = false;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    string outputFolder = @$"{_config.MUSIC_GENERATION_PATH}";
+                    Console.WriteLine($"[Music Gen] Watching for new audio in: {outputFolder}");
+
+                    // Remember the most recent file before generation starts
+                    string lastKnown = Directory.GetFiles(outputFolder, "*.wav")
+                        .OrderByDescending(f => File.GetCreationTimeUtc(f))
+                        .FirstOrDefault();
+
+                    DateTime start = DateTime.UtcNow;
+                    string latestMusic = null;
+                    int maxTimeWait = 300; // 5 minutes max wait
+
+                    while ((DateTime.UtcNow - start).TotalSeconds < maxTimeWait)
+                    {
+                        var files = Directory.GetFiles(outputFolder, "*.wav", SearchOption.TopDirectoryOnly);
+                        if (files.Length > 0)
+                        {
+                            var newest = files.OrderByDescending(f => File.GetCreationTimeUtc(f)).FirstOrDefault();
+                            if (newest != lastKnown && File.Exists(newest))
+                            {
+                                latestMusic = newest;
+                                break;
+                            }
+                        }
+                        await Task.Delay(3000); // check every 3 seconds
+                    }
+
+                    if (string.IsNullOrEmpty(latestMusic))
+                    {
+                        Console.WriteLine($"[Music Gen] No new music found after {maxTimeWait}s.");
+                        return;
+                    }
+
+                    string musicFile = Path.GetFileName(latestMusic);
+
+                    var embedWithMusic = new DiscordEmbedBuilder
+                    {
+                        Author = new DiscordEmbedBuilder.EmbedAuthor
+                        {
+                            Name = Truncate(message, 247),
+                            IconUrl = ctx.User.AvatarUrl
+                        },
+                        Title = $"Model: {_kernelService.Model}\n{givenFile}\n\nResponse",
+                        Description = $"{aiCleanedResponse}\n{webLinks}\n**Music attached:** {musicFile}",
+                        Color = DiscordColor.CornflowerBlue
+                    };
+
+                    // Edit the last message to include the music attachment
+                    await sendMessage.ModifyAsync(new DiscordMessageBuilder()
+                        .AddEmbed(embedWithMusic)
+                        .AddFile(musicFile, File.OpenRead(latestMusic)));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error while attaching generated music: {ex.Message}");
+                }
+            });
+        }
+
     }
 }

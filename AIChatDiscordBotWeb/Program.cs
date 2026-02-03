@@ -1,5 +1,6 @@
 using AIChatDiscordBotWeb.Models;
 using AIChatDiscordBotWeb.Services;
+using AIChatDiscordBotWeb.SlashCommands;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using System.Diagnostics;
 
@@ -15,11 +16,18 @@ builder.Services.AddSingleton<EnvConfig>(sp =>
     return envService.LoadAsync().Result;
 });
 
-// Register SemanticService Ollama (depends on EnvConfig)
-builder.Services.AddSingleton<SemanticKernelService>();
+// Register SemanticService Ollama (OLD Ollama connection)
+//builder.Services.AddSingleton<SemanticKernelService>();
+
+// Register AIConnectionService (new OpenAI-compatible Ollama,LM Studio and other connection)
+builder.Services.AddSingleton<AIConnectionService>();
 
 builder.Services.AddSingleton<ChatMemoryService>();
+builder.Services.AddSingleton<SlackMemoryService>();
 builder.Services.AddSingleton<KernelMemoryService>();
+
+// Register the ai group chat command
+builder.Services.AddSingleton<AIGroupChat>();
 
 // Register BotService (needs EnvService + IServiceProvider)
 builder.Services.AddSingleton<BotService>(sp =>

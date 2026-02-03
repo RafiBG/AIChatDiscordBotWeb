@@ -8,10 +8,13 @@ namespace AIChatDiscordBotWeb.Tools
     public class ComfyUITool
     {
         private readonly string _comfyUiApi;
+        private readonly int _width;
+        private readonly int _height;
+        private readonly byte _steps;
 
         public static bool IsImageGenerating { get; set; } = false;
 
-        public ComfyUITool(string comfyUiApi)
+        public ComfyUITool(string comfyUiApi, int width, int height, byte steps)
         {
             _comfyUiApi = comfyUiApi;
         }
@@ -53,7 +56,7 @@ namespace AIChatDiscordBotWeb.Tools
                         },
                         ["13"] = new
                         {
-                            inputs = new { width = 512, height = 512, batch_size = 1 },
+                            inputs = new { width = _width, height = _height, batch_size = 1 }, // Adjust width and height and numbeer of images as needed
                             class_type = "EmptySD3LatentImage"
                         },
                         ["11"] = new
@@ -66,7 +69,7 @@ namespace AIChatDiscordBotWeb.Tools
                             inputs = new
                             {
                                 seed = randomSeed,
-                                steps = 20,
+                                steps = _steps,
                                 cfg = 4,
                                 sampler_name = "res_multistep",
                                 scheduler = "simple",
@@ -106,7 +109,7 @@ namespace AIChatDiscordBotWeb.Tools
                 }
 
                 Console.WriteLine("\n[ComfyUI] Image generation started successfully.");
-                return "Image generation started successfully.";
+                return "Image generation started successfully. Tell user it will take time to be ready and when is done it will show here.";
             }
             catch (Exception ex)
             {

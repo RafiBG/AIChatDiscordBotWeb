@@ -4,6 +4,7 @@
     ViewBag.Title = "Configuration";
     // Convert list of ulong IDs into a comma-separated string for editing
     string allowedChannels = string.Join(",", Model.ALLOWED_CHANNEL_IDS ?? new List<ulong>());
+    string allowedGroupChannels = string.Join(",", Model.ALLOWED_GROUP_CHANNEL_IDS ?? new List<ulong>());
 }
 
 <h2>Bot Configuration</h2>
@@ -19,24 +20,55 @@
     <div class="mb-3">
         <label>Local Host</label>
         <input asp-for="LOCAL_HOST" class="form-control" />
-        <p>Example: http://localhost:11434 (this is default numbers for ollama if you didnt change to custom)</p>
+        <p>Example: http://localhost:11434/v1 (this is default numbers for ollama if you didnt change to custom)</p>
+        <p>http://localhost:11434/v1 and http://127.0.0.1:11434/v1 is the same. Any of them will work. Just change the numbers to your server ones.</p>
+        <p>Example for other Ollama PC connection: http://192.168.50.111:11434/v1</p>
+        <p>Example for LM Studio connection: http://127.0.0.1:1234/v1</p>
+        <p>Now you can connect to ChatGPT,Gemini or Ollama that is running on other PC in the same network. Check their website for the URL connection.</p>
     </div>
 
     <div class="mb-3">
         <label>Model</label>
         <input asp-for="MODEL" class="form-control" />
         <p>Write the whole name as shown in ollama</p>
+        <p >For AI providers like ChatGPT,Gemini or others check their website on what is the full name for the model.</p>
+    </div>
+
+    <div class="mb-3">
+        <label>API KEY</label>
+        <input asp-for="API_KEY" type="password" id="api" class="form-control" value="@Model.API_KEY" />
+        <input type="checkbox" onclick="apiKeyShow()">Show api key
+        <p>Here you enter the ChatGPT,Gemini or other ai api key.</p>
+        <p>If you use Ollama then leave it</p>
     </div>
 
     <div class="mb-3">
         <label>Allowed Channel IDs</label>
         <input name="AllowedChannelIdsInput" value="@allowedChannels" class="form-control" />
+        <p>Type the channels ids that will response on /ask and other slash commands that are typed there. </p>
         <p>Comma separated for more than one  Example: 12456, 2345</p>
+        <p style="color:cornflowerblue">If you leave it empty it will response in every channel.</p>
+    </div>
+
+    <div class="mb-3">
+        <label>Allowed Group Channel IDs</label>
+        <input name="AllowedGroupChannelIdsInput" value="@allowedGroupChannels" class="form-control" />
+        <p>Type the channels ids that the bot can chat with every discord user who types there. </p>
+        <p>Comma separated for more than one  Example: 12456, 2345</p>
+        <p style="color:cornflowerblue">If you leave it empty it will response in every channel. If random number then it wont response anywhere</p>
     </div>
 
     <div class="mb-3">
         <label>System Message</label>
-        <textarea asp-for="SYSTEM_MESSAGE" class="form-control" style="height:100px;"></textarea>
+        <textarea asp-for="SYSTEM_MESSAGE" class="form-control" style="height:300px;"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <h4>Short memory</h4>
+        <label>Maximum messages to remember</label>
+        <input asp-for="SHORT_MEMORY" class="form-control" />
+        <p>Write the maximum number of messages for the AI to remember.</p>
+        <p>Example: 10 by default</p>
     </div>
 
     <div class="mb-3">
@@ -61,6 +93,37 @@
     </div>
 
     <div class="mb-3">
+        <label>ComfyUI image width</label>
+        <input asp-for="COMFYUI_IMAGE_WIDTH" class="form-control" />
+        <p>Works with 512 and 1024. If you leave it empty by default will be 512. Bigger number uses more resources on the PC</p>
+    </div>
+
+    <div class="mb-3">
+        <label>ComfyUI image height</label>
+        <input asp-for="COMFYUI_IMAGE_HEIGHT" class="form-control" />
+        <p>Works with 512 and 1024. If you leave it empty by default will be 512. Bigger number uses more resources on the PC</p>
+    </div>
+
+    <div class="mb-3">
+        <label>ComfyUI image steps</label>
+        <input asp-for="COMFYUI_STEPS" class="form-control" />
+        <p>Works with 20 and more. If you leave it empty by default will be 20. Bigger number uses more resources on the PC</p>
+    </div>
+
+    <div class="mb-3">
+        <h4>Talking in voice channel config</h4>
+        <label>Talking System Message</label>
+        <textarea asp-for="TALK_SYSTEM_MESSAGE" class="form-control" style="height:100px;"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <h4>Music generation config</h4>
+        <label>ComfyUI path to the generated images</label>
+        <input asp-for="MUSIC_GENERATION_PATH" class="form-control" />
+        <p>Example: C:\Users\YourPCName\Desktop\MusicGenWorker\outputs</p>
+    </div>
+
+    <div class="mb-3">
         <h4>Multi-Models config</h4>
         <p>This models will be used in the command /ask_multi</p>
         <label>Multi Model 1</label>
@@ -80,6 +143,14 @@
         <p>Write the whole name as shown in ollama. For model 3</p>
     </div>
 
+    <div class="mb-3">
+        <h4>Long memory (RAG) config</h4>
+        <p>This models will be used in the command /ask to remember things even after restart.</p>
+        <label>Embeddin model</label>
+        <input asp-for="EMBEDDIN_MODEL" class="form-control" />
+        <p>Write the whole name as shown in ollama. Here is model for example that works great <a href="https://ollama.com/library/embeddinggemma">here</a></p>
+    </div>
+
     <p style="color:red">After you press the save button restart the whole program for the changes to apply.</p>
     <button type="submit" class="btn btn-primary">Save</button>
 
@@ -95,6 +166,15 @@
 
         function serperShow() {
           var x = document.getElementById("serper");
+          if (x.type === "password") {
+            x.type = "text";
+          } else {
+            x.type = "password";
+          }
+        }
+
+        function apiKeyShow() {
+          var x = document.getElementById("api");
           if (x.type === "password") {
             x.type = "text";
           } else {

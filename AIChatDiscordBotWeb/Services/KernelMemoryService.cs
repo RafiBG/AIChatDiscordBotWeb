@@ -32,13 +32,15 @@ namespace AIChatDiscordBotWeb.Services
             _memory = new KernelMemoryBuilder()
                 .WithOllamaTextGeneration(new OllamaConfig
                 {
-                    Endpoint = $"http://localhost:{config.LOCAL_HOST}",
+                    //Endpoint = $"http://localhost:{config.LOCAL_HOST}",
+                    Endpoint = $"{config.LOCAL_HOST}",
                     TextModel = new OllamaModelConfig(config.MODEL)
                 })
                 .WithOllamaTextEmbeddingGeneration(new OllamaConfig
                 {
-                    Endpoint = $"http://localhost:{config.LOCAL_HOST}",
-                    EmbeddingModel = new OllamaModelConfig("embeddinggemma:300m")
+                    //Endpoint = $"http://localhost:{config.LOCAL_HOST}",
+                    Endpoint = $"{config.LOCAL_HOST}",
+                    EmbeddingModel = new OllamaModelConfig(config.EMBEDDIN_MODEL)
                 })
                 .WithSimpleFileStorage(new SimpleFileStorageConfig
                 {
@@ -53,7 +55,7 @@ namespace AIChatDiscordBotWeb.Services
                 .Build<MemoryServerless>();
         }
 
-        public async Task SaveMemoryAsync(string userId, string fact)
+        public async Task SaveIndividualMemoryAsync(string userId, string fact)
         {
             // Tag the memory with "user_id" so we don't mix up different users
             var tags = new TagCollection { { "user_id", userId }, { "type", "fact" } };
@@ -62,7 +64,7 @@ namespace AIChatDiscordBotWeb.Services
             await _memory.ImportTextAsync(fact, tags: tags);
         }
 
-        public async Task<string> PullMemoryAsync(string userId, string question)
+        public async Task<string> PullIndividualMemoryAsync(string userId, string question)
         {
             // Only look at memories belonging to THIS user
             var filter = new MemoryFilter().ByTag("user_id", userId);
@@ -70,6 +72,28 @@ namespace AIChatDiscordBotWeb.Services
             // MinRelevance 0.6 ensures we don't hallucinate if no memory is found
             // Try lowering this value to 0.5 or 0.4 to allow for less exact matches!
             var answer = await _memory.AskAsync(question, filter: filter, minRelevance: 0.4);
+
+            if (answer.NoResult) return null;
+            return answer.Result;
+        }
+
+        public async Task SaveGroupMemoryAsync(string channelId, string username, string fact)
+        {
+            // Tag the memory with "user_id" so we don't mix up different users
+            var tags = new TagCollection { { "channel_id", channelId }, { "type", "fact" } };
+
+            // Use a generic document ID so specific facts don't overwrite each other unless intended
+            await _memory.ImportTextAsync(fact, tags: tags);
+        }
+
+        public async Task<string> PullGroupMemoryAsync(string channelId, string username, string question)
+        {
+            // Only look at memories belonging to THIS user
+            var filter = new MemoryFilter().ByTag("channel_id", channelId);
+
+            // MinRelevance 0.6 ensures we don't hallucinate if no memory is found
+            // Try lowering this value to 0.5 or 0.4 to allow for less exact matches!
+            var answer = await _memory.AskAsync(question, filter: filter, minRelevance: 0.3);
 
             if (answer.NoResult) return null;
             return answer.Result;
