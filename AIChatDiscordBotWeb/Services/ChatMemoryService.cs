@@ -14,11 +14,12 @@ namespace AIChatDiscordBotWeb.Services
     {
 
         private readonly EnvConfig _config;
-        private int MaxHistorySize = 10;
+        private int _maxHistorySize;
 
         public ChatMemoryService(EnvConfig config)
         {
             _config = config;
+            _maxHistorySize = config.SHORT_MEMORY;
         }
         private readonly ConcurrentDictionary<ulong, ChatHistory> _userHistories = new();
 
@@ -72,9 +73,9 @@ namespace AIChatDiscordBotWeb.Services
                     .Where(m => m.Role == AuthorRole.User || m.Role == AuthorRole.Assistant)
                     .ToList();
 
-                if (userAndAssistantMessage.Count > MaxHistorySize)
+                if (userAndAssistantMessage.Count > _maxHistorySize)
                 {
-                    int messagesRemove = userAndAssistantMessage.Count - MaxHistorySize;
+                    int messagesRemove = userAndAssistantMessage.Count - _maxHistorySize;
 
                     // Skip the oldest user/assistant messages
                     var messageKeep = userAndAssistantMessage

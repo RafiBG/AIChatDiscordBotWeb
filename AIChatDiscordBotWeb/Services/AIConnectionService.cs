@@ -52,7 +52,7 @@ namespace AIChatDiscordBotWeb.Services
             //);
 
             // Debug
-            Console.WriteLine($"\nHeight: {config.COMFYUI_IMAGE_HEIGHT}, Widht: {config.COMFYUI_IMAGE_WIDTH}, Steps: {config.COMFYUI_STEPS}\n");
+            //Console.WriteLine($"\nHeight: {config.COMFYUI_IMAGE_HEIGHT}, Widht: {config.COMFYUI_IMAGE_WIDTH}, Steps: {config.COMFYUI_STEPS}\n");
 
             // Register Tools
             builder.Plugins.AddFromType<TimeTool>();

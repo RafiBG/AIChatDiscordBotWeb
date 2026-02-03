@@ -64,6 +64,14 @@
     </div>
 
     <div class="mb-3">
+        <h4>Short memory</h4>
+        <label>Maximum messages to remember</label>
+        <input asp-for="SHORT_MEMORY" class="form-control" />
+        <p>Write the maximum number of messages for the AI to remember.</p>
+        <p>Example: 10 by default</p>
+    </div>
+
+    <div class="mb-3">
         <h4>Serper (Web search) config</h4>
         <label>Serper web api key</label>
         <input asp-for="SERPER_API_KEY" type="password" id="serper" class="form-control" value="@Model.SERPER_API_KEY" />
