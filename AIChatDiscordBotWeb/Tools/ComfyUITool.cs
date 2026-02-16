@@ -17,6 +17,9 @@ namespace AIChatDiscordBotWeb.Tools
         public ComfyUITool(string comfyUiApi, int width, int height, byte steps)
         {
             _comfyUiApi = comfyUiApi;
+            _width = width;
+            _height = height;
+            _steps = steps;
         }
 
         [KernelFunction("generate_image")]
